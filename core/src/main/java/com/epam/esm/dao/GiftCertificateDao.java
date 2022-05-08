@@ -1,13 +1,13 @@
 package com.epam.esm.dao;
 
+import com.epam.esm.dao.entity.CustomTag;
 import com.epam.esm.dao.entity.GiftCertificate;
-import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.ResultSet;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-
-import static com.epam.esm.dao.ColumnName.*;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Interface add BaseDao for work with GiftCertificate entity
@@ -15,34 +15,87 @@ import static com.epam.esm.dao.ColumnName.*;
 public interface GiftCertificateDao extends BaseDao<GiftCertificate, Long> {
 
     /**
-     * RowMapper for GiftCertificate
+     * Update fully GiftCertificate
+     *
+     * @param giftCertificate entity to update
+     * @return GiftCertificates after updating
      */
-    RowMapper<GiftCertificate> mapper = (ResultSet resultSet, int rowNum) -> {
-        GiftCertificate certificate = GiftCertificate.newBuilder()
-                .setEntityId(resultSet.getLong(ID_GIFT_CERTIFICATE))
-                .setName(resultSet.getString(NAME_GIFT_CERTIFICATE))
-                .setDescription(resultSet.getString(DESCRIPTION))
-                .setPrice(resultSet.getBigDecimal(PRICE))
-                .setDuration(resultSet.getInt(DURATION))
-                .setCreateDate(resultSet.getTimestamp(CREATE_DATE).toLocalDateTime())
-                .setLastUpdateDate(resultSet.getTimestamp(LAST_UPDATE_DATE).toLocalDateTime())
-                .build();
-        return certificate;
-    };
+    GiftCertificate update(GiftCertificate giftCertificate);
 
     /**
-     * Save coupling between GiftCertificate and CustomTag
-     * @param giftCertificateId GiftCertificate id
-     * @param customTagId CustomTags id
-     * @return true - if the operation was successful, false - if the operation was failed
+     * Update GiftCertificate name
+     *
+     * @param name new name
+     * @return GiftCertificates after updating
      */
-    boolean saveCoupling(Long giftCertificateId, Long customTagId);
+    GiftCertificate updateName(Long id, String name);
+
+    /**
+     * Update GiftCertificate description
+     *
+     * @param description new description
+     * @return GiftCertificates after updating
+     */
+    GiftCertificate updateDescription(Long id, String description);
+
+    /**
+     * Update GiftCertificate price
+     *
+     * @param price new price
+     * @return GiftCertificates after updating
+     */
+    GiftCertificate updatePrice(Long id, BigDecimal price);
+
+    /**
+     * Update GiftCertificate duration
+     *
+     * @param duration new duration
+     * @return GiftCertificates after updating
+     */
+    GiftCertificate updateDuration(Long id, Integer duration);
+
+    /**
+     * Update GiftCertificate tags
+     *
+     * @param tags new tag set
+     * @return GiftCertificates after updating
+     */
+    GiftCertificate updateTags(Long id, Set<CustomTag> tags);
 
     /**
      * Find GiftCertificates by parameters
+     *
+     * @param page       page
+     * @param size       page size
      * @param parameters search parameters
      * @return list of GiftCertificates or empty list if no one GiftCertificate was not found
      */
-    List<GiftCertificate> findAllByParameters(Map<String, String> parameters);
+    List<GiftCertificate> findAllByParameters(Map<String, String> parameters, int page, int size);
 
+    /**
+     * Count all GiftCertificates into database by parameters
+     *
+     * @return quantity of all GiftCertificates
+     */
+    long countByParameters(Map<String, String> parameters);
+
+    /**
+     * Find GiftCertificates by tags
+     *
+     * @param page page
+     * @param size page size
+     * @param tags tags
+     * @return list of GiftCertificates or empty list if no one GiftCertificate was not found
+     */
+    List<GiftCertificate> findByTags(int page, int size, String... tags);
+
+    /**
+     * Count all GiftCertificates into database by tags
+     *
+     * @return quantity of all GiftCertificates
+     */
+    long countByTags(String[] tags);
+
+    Optional<GiftCertificate> findNameAndDescriptionAndPriceAndDuration(String name, String description,
+                                                                        BigDecimal price, int duration);
 }

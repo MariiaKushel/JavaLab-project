@@ -1,135 +1,289 @@
 package com.epam.esm.dao.impl;
 
-import com.epam.esm.dao.ColumnName;
 import com.epam.esm.dao.GiftCertificateDao;
+import com.epam.esm.dao.entity.CustomTag;
+import com.epam.esm.dao.entity.CustomTag_;
 import com.epam.esm.dao.entity.GiftCertificate;
-import com.epam.esm.util.SqlRequestGenerator;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import com.epam.esm.dao.entity.GiftCertificate_;
+import com.epam.esm.service.SearchParameterName;
+import com.epam.esm.service.SortingType;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @Repository
 public class GiftCertificateDaoImpl implements GiftCertificateDao {
+    private static final String PERCENT_SIGN = "%";
 
-    private static final String SQL_SELECT_ALL = """
-            SELECT id_gift_certificate, name, description, price, duration, create_date, last_update_date
-            FROM gift_certificate
-            """;
-
-    private static final String SQL_SELECT_BY_ID = """
-            SELECT id_gift_certificate, name, description, price, duration, create_date, last_update_date
-            FROM gift_certificate
-            WHERE id_gift_certificate=?
-            """;
-
-    private static final String SQL_INSERT = """
-            INSERT INTO gift_certificate (name, description, price, duration, create_date, last_update_date)
-            VALUES (?,?,?,?,?,?)
-            """;
-
-    private static final String SQL_INSERT_COUPLING = """
-            INSERT INTO certificate_tag (id_gift_certificate, id_tag)
-            VALUES (?,?)
-            """;
-
-    private static final String SQL_DELETE = """
-            DELETE FROM gift_certificate
-            WHERE id_gift_certificate=?
-            """;
-
-    private static final String SQL_DELETE_COUPLING = """
-            DELETE FROM certificate_tag 
-            WHERE id_gift_certificate=?""";
-
-
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public GiftCertificateDaoImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
+    @Transactional
     public GiftCertificate save(GiftCertificate entity) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        PreparedStatementCreator preparedStatementCreator = (connection) -> {
-            PreparedStatement prepareStatement = connection.prepareStatement(SQL_INSERT, RETURN_GENERATED_KEYS);
-            prepareStatement.setString(1, entity.getName());
-            prepareStatement.setString(2, entity.getDescription());
-            prepareStatement.setBigDecimal(3, entity.getPrice());
-            prepareStatement.setInt(4, entity.getDuration());
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-            prepareStatement.setTimestamp(5, now);
-            prepareStatement.setTimestamp(6, now);
-            return prepareStatement;
-        };
-        jdbcTemplate.update(preparedStatementCreator, keyHolder);
-        long generatedKey = keyHolder.getKey().longValue();
-        return findById(generatedKey).get();
+        return entityManager.merge(entity);
     }
 
     @Override
-    public GiftCertificate update(Map<String, String> parameters) {
-        Map<String, List<String>> requestData = SqlRequestGenerator.generateSqlUpdateData(parameters);
-        String sqlUpdate = requestData.keySet().stream().findFirst().get();
-        List<String> values = requestData.get(sqlUpdate);
-        Long id = Long.parseLong(parameters.get(ColumnName.ID_GIFT_CERTIFICATE));
-
-        PreparedStatementCreator preparedStatementCreator = (connection) -> {
-            PreparedStatement prepareStatement = connection.prepareStatement(sqlUpdate);
-            int pos = 1;
-            for (int i = 0; i < values.size(); i++, pos++) {
-                prepareStatement.setString(pos, values.get(i));
-            }
-            prepareStatement.setTimestamp(pos, Timestamp.valueOf(LocalDateTime.now()));
-            prepareStatement.setLong(pos + 1, id);
-            return prepareStatement;
-        };
-
-        jdbcTemplate.update(preparedStatementCreator);
-        return findById(id).get();
+    @Transactional
+    public GiftCertificate update(GiftCertificate giftCertificate) {
+        return entityManager.merge(giftCertificate);
     }
 
     @Override
-    public void delete(Long id) {
-        jdbcTemplate.update(SQL_DELETE_COUPLING, id);
-        jdbcTemplate.update(SQL_DELETE, id);
+    @Transactional
+    public void delete(GiftCertificate entity) {
+        GiftCertificate giftCertificate = entityManager.merge(entity);
+        entityManager.remove(giftCertificate);
     }
 
     @Override
-    public List<GiftCertificate> findAll() {
-        return jdbcTemplate.query(SQL_SELECT_ALL, mapper);
+    public List<GiftCertificate> findAll(int page, int size) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(root);
+        return entityManager.createQuery(criteria)
+                .setFirstResult((page - 1) * size)
+                .setMaxResults(size)
+                .getResultList();
     }
 
     @Override
     public Optional<GiftCertificate> findById(Long id) {
-        List<GiftCertificate> giftCertificateList = jdbcTemplate.query(SQL_SELECT_BY_ID, mapper, id);
-        return giftCertificateList.stream().findFirst();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(root)
+                .where(builder.equal(root.get(GiftCertificate_.id), id));
+        return entityManager.createQuery(criteria)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     @Override
-    public boolean saveCoupling(Long giftCertificateId, Long customTagId) {
-        int insertedRows = jdbcTemplate.update(SQL_INSERT_COUPLING, giftCertificateId, customTagId);
-        return insertedRows == 1;
+    public long count() {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> criteria = builder.createQuery(Long.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(builder.count(root.get(GiftCertificate_.id)));
+        return entityManager.createQuery(criteria)
+                .getSingleResult();
+    }
+
+
+    @Override
+    @Transactional
+    public GiftCertificate updateName(Long id, String name) {
+        entityManager.clear();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.set(root.get(GiftCertificate_.name), name)
+                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
+                .where(builder.equal(root.get(GiftCertificate_.id), id));
+        entityManager.createQuery(criteria).executeUpdate();
+        return findById(id).get();
     }
 
     @Override
-    public List<GiftCertificate> findAllByParameters(Map<String, String> parameters) {
-        Map<String, List<String>> requestData = SqlRequestGenerator.generateSqlSelectByParametersData(parameters);
-        String sqlSelect = requestData.keySet().stream().findFirst().get();
-        String[] values = requestData.get(sqlSelect).stream().toArray(String[]::new);
-        return jdbcTemplate.query(sqlSelect, mapper, values);
+    @Transactional
+    public GiftCertificate updateDescription(Long id, String description) {
+        entityManager.clear();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.set(root.get(GiftCertificate_.description), description)
+                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
+                .where(builder.equal(root.get(GiftCertificate_.ID), id));
+        entityManager.createQuery(criteria).executeUpdate();
+        return findById(id).get();
+    }
+
+    @Override
+    @Transactional
+    public GiftCertificate updatePrice(Long id, BigDecimal price) {
+        entityManager.clear();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.set(root.get(GiftCertificate_.price), price)
+                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
+                .where(builder.equal(root.get(GiftCertificate_.ID), id));
+        entityManager.createQuery(criteria).executeUpdate();
+        return findById(id).get();
+    }
+
+    @Override
+    @Transactional
+    public GiftCertificate updateDuration(Long id, Integer duration) {
+        entityManager.clear();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.set(root.get(GiftCertificate_.duration), duration)
+                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
+                .where(builder.equal(root.get(GiftCertificate_.ID), id));
+        entityManager.createQuery(criteria).executeUpdate();
+        return findById(id).get();
+    }
+
+    @Override
+    @Transactional
+    public GiftCertificate updateTags(Long id, Set<CustomTag> tags) {
+        entityManager.clear();
+        GiftCertificate giftCertificate = findById(id).get();
+        giftCertificate.setTags(tags);
+        return entityManager.merge(giftCertificate);
+    }
+
+    @Override
+    public List<GiftCertificate> findAllByParameters(Map<String, String> parameters, int page, int size) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(root);
+        Predicate[] filters = collectFilters(builder, root, parameters);
+        if (filters.length > 0) {
+            criteria.where(filters);
+        }
+        Order[] sorting = collectSorting(builder, root, parameters.get(SearchParameterName.SORT_BY));
+        if (sorting.length > 0) {
+            criteria.orderBy(sorting);
+        }
+        return entityManager.createQuery(criteria)
+                .setFirstResult(page - 1)
+                .setMaxResults(size)
+                .getResultList();
+    }
+
+    @Override
+    public long countByParameters(Map<String, String> parameters) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> criteria = builder.createQuery(Long.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(builder.count(root.get(GiftCertificate_.id)));
+        Predicate[] filters = collectFilters(builder, root, parameters);
+        if (filters.length > 0) {
+            criteria.where(filters);
+        }
+        return entityManager.createQuery(criteria)
+                .getSingleResult();
+    }
+
+    @Override
+    public List<GiftCertificate> findByTags(int page, int size, String... tags) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        Join<GiftCertificate, CustomTag> joinTags = root.join(GiftCertificate_.tags);
+
+        int numberOfTags = tags.length;
+        criteria.select(root)
+                .where(joinTags.get(CustomTag_.name).in(tags))
+                .groupBy(root.get(GiftCertificate_.id))
+                .having(builder.equal(builder.count(root.get(GiftCertificate_.id)), numberOfTags));
+        return entityManager.createQuery(criteria)
+                .setFirstResult((page - 1) * size)
+                .setMaxResults(size)
+                .getResultList();
+    }
+
+    @Override
+    public long countByTags(String[] tags) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        Join<GiftCertificate, CustomTag> joinTags = root.join(GiftCertificate_.tags);
+
+        int numberOfTags = tags.length;
+        criteria.select(root)
+                .where(joinTags.get(CustomTag_.name).in(tags))
+                .groupBy(root.get(GiftCertificate_.id))
+                .having(builder.equal(builder.count(root.get(GiftCertificate_.id)), numberOfTags));
+        return entityManager.createQuery(criteria)
+                .getResultList()
+                .size();
+    }
+
+    @Override
+    public Optional<GiftCertificate> findNameAndDescriptionAndPriceAndDuration(String name, String description,
+                                                                               BigDecimal price, int duration) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteria = builder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
+        criteria.select(root)
+                .where(
+                        builder.equal(root.get(GiftCertificate_.name), name),
+                        builder.equal(root.get(GiftCertificate_.description), description),
+                        builder.equal(root.get(GiftCertificate_.price), price),
+                        builder.equal(root.get(GiftCertificate_.duration), duration)
+                );
+        return entityManager.createQuery(criteria)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    private Predicate[] collectFilters(CriteriaBuilder builder, Root<GiftCertificate> root,
+                                       Map<String, String> parameters) {
+        List<Predicate> predicates = new ArrayList<>();
+
+        String tagName = parameters.get(SearchParameterName.TAG);
+        if (tagName != null) {
+            Join<GiftCertificate, CustomTag> joinTags = root.join(GiftCertificate_.tags);
+            predicates.add(builder.equal(joinTags.get(CustomTag_.name), tagName));
+        }
+
+        String name = parameters.get(SearchParameterName.NAME);
+        if (name != null) {
+            predicates.add(builder.like(root.get(GiftCertificate_.name), PERCENT_SIGN + name + PERCENT_SIGN));
+        }
+
+        String description = parameters.get(SearchParameterName.DESCRIPTION);
+        if (description != null) {
+            predicates.add(builder.like(root.get(GiftCertificate_.description), PERCENT_SIGN + description + PERCENT_SIGN));
+        }
+        Predicate[] predicatesAsArray = new Predicate[predicates.size()];
+        predicatesAsArray = predicates.toArray(predicatesAsArray);
+        return predicatesAsArray;
+    }
+
+    private Order[] collectSorting(CriteriaBuilder builder, Root<GiftCertificate> root, String sortBy) {
+        if (sortBy == null) {
+            return new Order[]{};
+        }
+        SortingType type = SortingType.getSortingType(sortBy);
+        List<Order> orderByList =
+                switch (type) {
+                    case NAME_ASC -> Stream.of(builder.asc(root.get(GiftCertificate_.name))).toList();
+                    case NAME_DESC -> Stream.of(builder.desc(root.get(GiftCertificate_.name))).toList();
+                    case DATE_ASC -> Stream.of(builder.asc(root.get(GiftCertificate_.createDate))).toList();
+                    case DATE_DESC -> Stream.of(builder.desc(root.get(GiftCertificate_.createDate))).toList();
+                    case DATE_DESC_NAME_ASC -> Stream.of(builder.desc(root.get(GiftCertificate_.createDate)),
+                            builder.asc(root.get(GiftCertificate_.name))).toList();
+
+                };
+        Order[] orderByArray = new Order[orderByList.size()];
+        orderByArray = orderByList.toArray(orderByArray);
+        return orderByArray;
     }
 }

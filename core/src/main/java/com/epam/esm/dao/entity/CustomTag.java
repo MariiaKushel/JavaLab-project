@@ -1,54 +1,49 @@
 package com.epam.esm.dao.entity;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToMany;
+import javax.persistence.PreRemove;
+import javax.persistence.Table;
+import java.util.Set;
+
 /**
  * Class represent CustomTag entity
  */
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true, exclude = "giftCertificates")
+@ToString(callSuper = true, exclude = "giftCertificates")
+@Entity
+@Table(name = "tags")
 public class CustomTag extends BaseEntity {
 
+    @Column(name = "name")
     private String name;
 
-    public CustomTag(){
-
-    }
+    @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
+    private Set<GiftCertificate> giftCertificates;
 
     public CustomTag(String name) {
+        super();
         this.name = name;
     }
 
-    public CustomTag(long entityId, String name) {
-        this.setId(entityId);
+    public CustomTag(Long id, String name) {
+        super(id);
         this.name = name;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        CustomTag customTag = (CustomTag) o;
-
-        return name != null ? name.equals(customTag.name) : customTag.name == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return new StringBuilder()
-                .append("CustomTag [")
-                .append("name=")
-                .append(name)
-                .append("]")
-                .toString();
+    @PreRemove
+    public void removeGiftCertificateCoupling(){
+        for( GiftCertificate giftCertificate : giftCertificates){
+            giftCertificate.getTags().remove(this);
+        }
     }
 }

@@ -3,7 +3,7 @@ package com.epam.esm.exception;
 /**
  * Custom exception class
  */
-public class CustomException extends Exception{
+public class CustomException extends Exception {
 
     private CustomErrorCode customErrorCode;
 

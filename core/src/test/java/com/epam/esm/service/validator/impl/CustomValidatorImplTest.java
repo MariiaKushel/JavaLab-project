@@ -1,31 +1,28 @@
 package com.epam.esm.service.validator.impl;
 
-import com.epam.esm.dao.entity.CustomTag;
 import com.epam.esm.service.SearchParameterName;
-import com.epam.esm.service.dto.GiftCertificateDto;
+import com.epam.esm.service.dto.CertificateDto;
+import com.epam.esm.service.dto.TagDto;
 import com.epam.esm.service.validator.CustomValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 class CustomValidatorImplTest {
 
-    private CustomValidator validator;
-
-    public CustomValidatorImplTest() {
-        validator = new CustomValidatorImpl();
-    }
+    private CustomValidator validator = new CustomValidatorImpl();
 
     public static Object[][] validateEntityIdDataProvider() {
         return new Object[][]{
                 {1L, true},
-                {-1L, false}
+                {-1L, false},
         };
     }
 
@@ -36,67 +33,90 @@ class CustomValidatorImplTest {
         Assertions.assertEquals(actual, expected);
     }
 
-    public static Object[][] validateCustomTagDataProvider() {
+    public static Object[][] validateTagDtoDataProvider() {
         return new Object[][]{
-                {new CustomTag("tag"), true},
-                {new CustomTag("tag tag"), false},
-                {new CustomTag("tag!!!"), false}
+                {new TagDto("tag"), true},
+                {new TagDto("tag tag"), false},
+                {new TagDto("tag!!!"), false}
         };
     }
 
     @ParameterizedTest
-    @MethodSource("validateCustomTagDataProvider")
-    void validateCustomTag(CustomTag tag, boolean expected) {
-        boolean actual = validator.validateCustomTag(tag);
+    @MethodSource("validateTagDtoDataProvider")
+    void validateTagDto(TagDto tag, boolean expected) {
+        boolean actual = validator.validateTagDto(tag);
         Assertions.assertEquals(actual, expected);
     }
 
-    public static Object[][] validateGiftCertificateDtoCreateDataProvider() {
-        GiftCertificateDto dto1 = new GiftCertificateDto();
+    public static Object[][] validateCertificateDtoCreateDataProvider() {
+        CertificateDto dto1 = new CertificateDto();
         dto1.setName("gift");
         dto1.setDescription("description");
         dto1.setPrice(new BigDecimal(100));
         dto1.setDuration(60);
-        List<CustomTag> tags = new ArrayList<>();
-        tags.add(new CustomTag("tag1"));
-        tags.add(new CustomTag("tag2"));
+        Set<TagDto> tags = new HashSet<>();
+        tags.add(new TagDto("tag1"));
+        tags.add(new TagDto("tag2"));
         dto1.setTags(tags);
 
-        GiftCertificateDto dto2 = new GiftCertificateDto();
+        CertificateDto dto2 = new CertificateDto();
         dto2.setName("gift");
+
+        CertificateDto dto3 = new CertificateDto();
+
+        CertificateDto dto4 = new CertificateDto();
+        dto4.setName("gift");
+        dto4.setDescription("description");
+        dto4.setPrice(new BigDecimal(100));
+        dto4.setDuration(60);
+
         return new Object[][]{
                 {dto1, true},
-                {dto2, false}
+                {dto2, false},
+                {dto3, false},
+                {dto4, false}
         };
     }
 
     @ParameterizedTest
-    @MethodSource("validateGiftCertificateDtoCreateDataProvider")
-    void validateGiftCertificateDtoCreate(GiftCertificateDto dto, boolean expected) {
-        boolean actual = validator.validateGiftCertificateDtoCreate(dto);
+    @MethodSource("validateCertificateDtoCreateDataProvider")
+    void validateCertificateDtoCreate(CertificateDto dto, boolean expected) {
+        boolean actual = validator.validateCertificateDtoCreate(dto);
         Assertions.assertEquals(actual, expected);
     }
 
-    public static Object[][] validateGiftCertificateDtoUpdateDataProvider() {
-        GiftCertificateDto dto1 = new GiftCertificateDto();
+    public static Object[][] validateCertificateDtoUpdateDataProvider() {
+        CertificateDto dto1 = new CertificateDto();
         dto1.setPrice(new BigDecimal(100));
-        List<CustomTag> tags = new ArrayList<>();
-        tags.add(new CustomTag("tag1"));
-        tags.add(new CustomTag("tag2"));
+        Set<TagDto> tags = new HashSet<>();
+        tags.add(new TagDto("tag1"));
+        tags.add(new TagDto("tag2"));
         dto1.setTags(tags);
 
-        GiftCertificateDto dto2 = new GiftCertificateDto();
+        CertificateDto dto2 = new CertificateDto();
         dto2.setPrice(new BigDecimal(-1));
+
+        CertificateDto dto3 = new CertificateDto();
+
+        CertificateDto dto4 = new CertificateDto();
+        dto4.setDescription("new description");
+
+        CertificateDto dto5 = new CertificateDto();
+        dto5.setCreateDate(LocalDateTime.now());
+
         return new Object[][]{
                 {dto1, true},
-                {dto2, false}
+                {dto2, false},
+                {dto3, false},
+                {dto4, true},
+                {dto5, false}
         };
     }
 
     @ParameterizedTest
-    @MethodSource("validateGiftCertificateDtoUpdateDataProvider")
-    void validateGiftCertificateDtoUpdate(GiftCertificateDto dto, boolean expected) {
-        boolean actual = validator.validateGiftCertificateDtoUpdate(dto);
+    @MethodSource("validateCertificateDtoUpdateDataProvider")
+    void validateCertificateDtoUpdate(CertificateDto dto, boolean expected) {
+        boolean actual = validator.validateCertificateDtoUpdate(dto);
         Assertions.assertEquals(actual, expected);
     }
 
@@ -107,14 +127,31 @@ class CustomValidatorImplTest {
         param2.put(SearchParameterName.TAG, "tag");
         param2.put(SearchParameterName.NAME, "gift");
         param2.put(SearchParameterName.DESCRIPTION, "description");
-        param2.put(SearchParameterName.SORTING, "NAME_ASC");
+        param2.put(SearchParameterName.SORT_BY, "NAME_ASC");
 
         Map<String, String> param3 = new HashMap<>();
-        param3.put(SearchParameterName.SORTING, "azaza");
+        param3.put(SearchParameterName.SORT_BY, "azaza");
+
+        Map<String, String> param4 = new HashMap<>();
+        param4.put(SearchParameterName.TAG, "tag");
+        param4.put(SearchParameterName.NAME, "gift");
+
+        Map<String, String> param5 = new HashMap<>();
+        param5.put("unknown", "azaza");
+        param5.put(SearchParameterName.NAME, "gift");
+
+        Map<String, String> param6 = new HashMap<>();
+        param6.put("unknown", "azaza");
+
+        Map<String, String> param7 = new HashMap<>();
         return new Object[][]{
-                {param1, true},
+                {param1, false},
                 {param2, true},
-                {param3, false}
+                {param3, false},
+                {param4, true},
+                {param5, false},
+                {param6, false},
+                {param7, false}
         };
     }
 
