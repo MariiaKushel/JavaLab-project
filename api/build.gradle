@@ -1,0 +1,13 @@
+apply plugin: 'war'
+
+dependencies {
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+
+    implementation project(':core')
+    implementation 'com.jayway.jsonpath:json-path:2.7.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.2'
+
+    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+}
