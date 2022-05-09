@@ -145,13 +145,13 @@ class TagServiceImplTest {
     }
 
     @Test
-    void findTheMostWidelyTags() {
+    void findTheMostWidelyTag() {
         CustomTag tag = new CustomTag(1L, "tag");
-        Mockito.when(daoMock.findTheMostWidelyTags()).thenReturn(tag);
+        Mockito.when(daoMock.findTheMostWidelyTag()).thenReturn(tag);
         TagDto expected = DtoEntityConvector.convert(tag);
-        TagDto actual = service.findTheMostWidelyTags();
+        TagDto actual = service.findTheMostWidelyTag();
 
-        Mockito.verify(daoMock, Mockito.times(1)).findTheMostWidelyTags();
+        Mockito.verify(daoMock, Mockito.times(1)).findTheMostWidelyTag();
         Assertions.assertEquals(actual, expected);
     }
 }

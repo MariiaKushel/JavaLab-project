@@ -114,8 +114,8 @@ public class TagController {
      * @return TagDto as the most widely used tag
      */
     @GetMapping(value = "/the-most-widely")
-    public TagDto findTheMostWidelyTags() throws CustomException {
-        TagDto tag = service.findTheMostWidelyTags();
+    public TagDto findTheMostWidelyTag() throws CustomException {
+        TagDto tag = service.findTheMostWidelyTag();
         addSelfLink(tag);
         return tag;
     }

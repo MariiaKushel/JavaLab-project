@@ -24,6 +24,6 @@ public interface CustomTagDao extends BaseDao<CustomTag, Long> {
      *
      * @return entity CustomTag
      */
-    CustomTag findTheMostWidelyTags();
+    CustomTag findTheMostWidelyTag();
 
 }

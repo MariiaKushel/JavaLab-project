@@ -74,8 +74,8 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public TagDto findTheMostWidelyTags() {
-        CustomTag tag = dao.findTheMostWidelyTags();
+    public TagDto findTheMostWidelyTag() {
+        CustomTag tag = dao.findTheMostWidelyTag();
         return DtoEntityConvector.convert(tag);
     }
 

@@ -52,7 +52,7 @@ public interface TagService {
      *
      * @return CustomTag as TagDto
      */
-    TagDto findTheMostWidelyTags();
+    TagDto findTheMostWidelyTag();
 
 
     /**

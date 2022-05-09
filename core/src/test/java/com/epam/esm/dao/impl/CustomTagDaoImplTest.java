@@ -93,8 +93,8 @@ class CustomTagDaoImplTest {
 
 
     @Test
-    void findTheMostWidelyTags() {
-        CustomTag tag = dao.findTheMostWidelyTags();
+    void findTheMostWidelyTag() {
+        CustomTag tag = dao.findTheMostWidelyTag();
         Assertions.assertNotNull(tag);
     }
 }

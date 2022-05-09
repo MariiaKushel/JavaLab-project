@@ -200,9 +200,9 @@ class TagControllerTest {
     }
 
     @Test
-    void findTheMostWidelyTags() throws Exception {
+    void findTheMostWidelyTag() throws Exception {
         TagDto tag = new TagDto(1L, "tag");
-        Mockito.when(serviceMock.findTheMostWidelyTags()).thenReturn(tag);
+        Mockito.when(serviceMock.findTheMostWidelyTag()).thenReturn(tag);
 
         mockMvc.perform(get("/tags/the-most-widely"))
                 .andDo(print())
@@ -211,6 +211,6 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.name").value("tag"))
                 .andExpect(jsonPath("$._links.self.href", notNullValue()));
 
-        Mockito.verify(serviceMock, Mockito.times(1)).findTheMostWidelyTags();
+        Mockito.verify(serviceMock, Mockito.times(1)).findTheMostWidelyTag();
     }
 }

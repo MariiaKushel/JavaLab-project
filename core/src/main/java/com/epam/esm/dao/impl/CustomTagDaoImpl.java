@@ -112,7 +112,7 @@ public class CustomTagDaoImpl implements CustomTagDao {
     }
 
     @Override
-    public CustomTag findTheMostWidelyTags() {
+    public CustomTag findTheMostWidelyTag() {
         return (CustomTag) entityManager.createNativeQuery(SQL_SELECT_THE_MOST_WIDELY_TAG, CustomTag.class)
                 .getSingleResult();
     }
