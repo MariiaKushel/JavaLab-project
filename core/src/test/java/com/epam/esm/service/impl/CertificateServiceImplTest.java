@@ -342,50 +342,6 @@ class CertificateServiceImplTest {
     }
 
     @Test
-    void updateName() throws CustomException {
-        GiftCertificate certificate = new GiftCertificate();
-        certificate.setId(1L);
-        certificate.setName("new name");
-        Mockito.when(validatorMock.validateCertificateDtoUpdate(Mockito.any())).thenReturn(true);
-        Mockito.when(daoMock.findById(Mockito.anyLong())).thenReturn(Optional.of(certificate));
-        Mockito.when(daoMock.updateName(Mockito.anyLong(), Mockito.anyString())).thenReturn(certificate);
-
-        CertificateDto expected = DtoEntityConvector.convert(certificate);
-        CertificateDto actual = service.updateName(1L, "new name");
-
-        Mockito.verify(validatorMock, Mockito.times(1)).validateCertificateDtoUpdate(Mockito.any());
-        Mockito.verify(daoMock, Mockito.times(1)).findById(Mockito.anyLong());
-        Mockito.verify(daoMock, Mockito.times(1)).updateName(Mockito.anyLong(),
-                Mockito.anyString());
-        Assertions.assertEquals(actual, expected);
-    }
-
-    @Test
-    void updateNameNotFoundException() {
-        Mockito.when(validatorMock.validateCertificateDtoUpdate(Mockito.any())).thenReturn(true);
-        Mockito.when(daoMock.findById(Mockito.anyLong())).thenReturn(Optional.empty());
-        CustomException e = Assertions.assertThrows(CustomException.class,
-                () -> service.updateName(999L, "new name"));
-        CustomErrorCode expected = CustomErrorCode.RESOURCE_NOT_FOUND;
-        CustomErrorCode actual = e.getCustomErrorCode();
-
-        Mockito.verify(validatorMock, Mockito.times(1)).validateCertificateDtoUpdate(Mockito.any());
-        Mockito.verify(daoMock, Mockito.times(1)).findById(Mockito.anyLong());
-        Assertions.assertEquals(actual, expected);
-    }
-
-    @Test
-    void updateNameNotValidException() {
-        Mockito.when(validatorMock.validateCertificateDtoUpdate(Mockito.any())).thenReturn(false);
-        CustomException e = Assertions.assertThrows(CustomException.class, () -> service.updateName(-1L, "!!!"));
-        CustomErrorCode expected = CustomErrorCode.NOT_VALID_DATA;
-        CustomErrorCode actual = e.getCustomErrorCode();
-
-        Mockito.verify(validatorMock, Mockito.times(1)).validateCertificateDtoUpdate(Mockito.any());
-        Assertions.assertEquals(actual, expected);
-    }
-
-    @Test
     void findAllByParameters() throws CustomException {
         GiftCertificate certificate1 = new GiftCertificate();
         certificate1.setId(1L);

@@ -2,12 +2,9 @@ package com.epam.esm.service;
 
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.dto.CertificateDto;
-import com.epam.esm.service.dto.TagDto;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Interface contains service methods for work with GiftCertificate entity
@@ -61,56 +58,6 @@ public interface CertificateService {
      * @throws CustomException if id has not valid value or GiftCertificate was not found
      */
     CertificateDto update(long id, CertificateDto certificateDto) throws CustomException;
-
-    /**
-     * Update GiftCertificate name
-     *
-     * @param id   GiftCertificate id
-     * @param name new name
-     * @return updated GiftCertificate as GiftCertificateDto
-     * @throws CustomException if id or name has not valid value or GiftCertificate was not found
-     */
-    CertificateDto updateName(long id, String name) throws CustomException;
-
-    /**
-     * Update GiftCertificate description
-     *
-     * @param id          GiftCertificate id
-     * @param description new description
-     * @return updated GiftCertificate as GiftCertificateDto
-     * @throws CustomException if id or description has not valid value or GiftCertificate was not found
-     */
-    CertificateDto updateDescription(long id, String description) throws CustomException;
-
-    /**
-     * Update GiftCertificate price
-     *
-     * @param id    GiftCertificate id
-     * @param price new price
-     * @return updated GiftCertificate as GiftCertificateDto
-     * @throws CustomException if id or price has not valid value or GiftCertificate was not found
-     */
-    CertificateDto updatePrice(long id, BigDecimal price) throws CustomException;
-
-    /**
-     * Update GiftCertificate duration
-     *
-     * @param id       GiftCertificate id
-     * @param duration new duration
-     * @return updated GiftCertificate as GiftCertificateDto
-     * @throws CustomException if id or duration has not valid value or GiftCertificate was not found
-     */
-    CertificateDto updateDuration(long id, Integer duration) throws CustomException;
-
-    /**
-     * Update GiftCertificate tags
-     *
-     * @param id      GiftCertificate id
-     * @param tagDtos new tags
-     * @return updated GiftCertificate as GiftCertificateDto
-     * @throws CustomException if id or tags has not valid value or GiftCertificate was not found
-     */
-    CertificateDto updateTags(long id, Set<TagDto> tagDtos) throws CustomException;
 
     /**
      * Find GiftCertificates by parameters with pagination

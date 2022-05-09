@@ -14,18 +14,15 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 @Repository
@@ -43,8 +40,8 @@ public class GiftCertificateDaoImpl implements GiftCertificateDao {
 
     @Override
     @Transactional
-    public GiftCertificate update(GiftCertificate giftCertificate) {
-        return entityManager.merge(giftCertificate);
+    public GiftCertificate update(GiftCertificate entity) {
+        return entityManager.merge(entity);
     }
 
     @Override
@@ -87,72 +84,6 @@ public class GiftCertificateDaoImpl implements GiftCertificateDao {
         criteria.select(builder.count(root.get(GiftCertificate_.id)));
         return entityManager.createQuery(criteria)
                 .getSingleResult();
-    }
-
-
-    @Override
-    @Transactional
-    public GiftCertificate updateName(Long id, String name) {
-        entityManager.clear();
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
-        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
-        criteria.set(root.get(GiftCertificate_.name), name)
-                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
-                .where(builder.equal(root.get(GiftCertificate_.id), id));
-        entityManager.createQuery(criteria).executeUpdate();
-        return findById(id).get();
-    }
-
-    @Override
-    @Transactional
-    public GiftCertificate updateDescription(Long id, String description) {
-        entityManager.clear();
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
-        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
-        criteria.set(root.get(GiftCertificate_.description), description)
-                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
-                .where(builder.equal(root.get(GiftCertificate_.ID), id));
-        entityManager.createQuery(criteria).executeUpdate();
-        return findById(id).get();
-    }
-
-    @Override
-    @Transactional
-    public GiftCertificate updatePrice(Long id, BigDecimal price) {
-        entityManager.clear();
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
-        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
-        criteria.set(root.get(GiftCertificate_.price), price)
-                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
-                .where(builder.equal(root.get(GiftCertificate_.ID), id));
-        entityManager.createQuery(criteria).executeUpdate();
-        return findById(id).get();
-    }
-
-    @Override
-    @Transactional
-    public GiftCertificate updateDuration(Long id, Integer duration) {
-        entityManager.clear();
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        CriteriaUpdate<GiftCertificate> criteria = builder.createCriteriaUpdate(GiftCertificate.class);
-        Root<GiftCertificate> root = criteria.from(GiftCertificate.class);
-        criteria.set(root.get(GiftCertificate_.duration), duration)
-                .set(root.get(GiftCertificate_.lastUpdateDate), LocalDateTime.now())
-                .where(builder.equal(root.get(GiftCertificate_.ID), id));
-        entityManager.createQuery(criteria).executeUpdate();
-        return findById(id).get();
-    }
-
-    @Override
-    @Transactional
-    public GiftCertificate updateTags(Long id, Set<CustomTag> tags) {
-        entityManager.clear();
-        GiftCertificate giftCertificate = findById(id).get();
-        giftCertificate.setTags(tags);
-        return entityManager.merge(giftCertificate);
     }
 
     @Override

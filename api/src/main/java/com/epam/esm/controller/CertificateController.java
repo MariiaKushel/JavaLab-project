@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +125,7 @@ public class CertificateController {
     }
 
     /**
-     * Method to partly update GiftCertificate with tags.
+     * Method to update GiftCertificate with tags.
      * If such tag have not existed yet, it will be created.
      *
      * @param id  GiftCertificate id
@@ -139,92 +138,6 @@ public class CertificateController {
                                             @RequestBody CertificateDto dto)
             throws CustomException {
         CertificateDto certificate = service.update(id, dto);
-        addSelfLink(certificate);
-        return certificate;
-    }
-
-    /**
-     * Method updates the name of GiftCertificate.
-     *
-     * @param id   GiftCertificate id
-     * @param name new name
-     * @return CertificateDto contains updated GiftCertificate.
-     * @throws CustomException if the name has not valid value or GiftCertificate by id not found;
-     */
-    @PatchMapping(value = "/{id}/name", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public CertificateDto updateCertificateName(@PathVariable("id") long id,
-                                                @RequestBody String name)
-            throws CustomException {
-        CertificateDto certificate = service.updateName(id, name.replaceAll("\"", ""));
-        addSelfLink(certificate);
-        return certificate;
-    }
-
-    /**
-     * Method updates the description of GiftCertificate.
-     *
-     * @param id          GiftCertificate id
-     * @param description new description
-     * @return CertificateDto contains updated GiftCertificate.
-     * @throws CustomException if the description has not valid value or GiftCertificate by id not found;
-     */
-    @PatchMapping(value = "/{id}/description", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public CertificateDto updateCertificateDescription(@PathVariable("id") long id,
-                                                       @RequestBody String description)
-            throws CustomException {
-        CertificateDto certificate = service.updateDescription(id, description.replaceAll("\"", ""));
-        addSelfLink(certificate);
-        return certificate;
-    }
-
-    /**
-     * Method updates the price of GiftCertificate.
-     *
-     * @param id    GiftCertificate id
-     * @param price new price
-     * @return CertificateDto contains updated GiftCertificate.
-     * @throws CustomException if the price has not valid value or GiftCertificate by id not found;
-     */
-    @PatchMapping(value = "/{id}/price", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public CertificateDto updateCertificatePrice(@PathVariable("id") long id,
-                                                 @RequestBody BigDecimal price)
-            throws CustomException {
-        CertificateDto certificate = service.updatePrice(id, price);
-        addSelfLink(certificate);
-        return certificate;
-    }
-
-    /**
-     * Method updates the duration of GiftCertificate.
-     *
-     * @param id       GiftCertificate id
-     * @param duration new duration
-     * @return CertificateDto contains updated GiftCertificate.
-     * @throws CustomException if the duration has not valid value or GiftCertificate by id not found;
-     */
-    @PatchMapping(value = "/{id}/duration", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public CertificateDto updateCertificateDuration(@PathVariable("id") long id,
-                                                    @RequestBody Integer duration)
-            throws CustomException {
-        CertificateDto certificate = service.updateDuration(id, duration);
-        addSelfLink(certificate);
-        return certificate;
-    }
-
-    /**
-     * Method updates the tags of GiftCertificate.
-     * If such tag have not existed yet, it will be created.
-     *
-     * @param id   GiftCertificate id
-     * @param tags tag set
-     * @return CertificateDto contains updated GiftCertificate.
-     * @throws CustomException if the tag set has not valid value or GiftCertificate by id not found;
-     */
-    @PatchMapping(value = "/{id}/tags", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public CertificateDto updateCertificateTags(@PathVariable("id") long id,
-                                                @RequestBody Set<TagDto> tags)
-            throws CustomException {
-        CertificateDto certificate = service.updateTags(id, tags);
         addSelfLink(certificate);
         return certificate;
     }

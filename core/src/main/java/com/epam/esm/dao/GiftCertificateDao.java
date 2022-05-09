@@ -1,66 +1,16 @@
 package com.epam.esm.dao;
 
-import com.epam.esm.dao.entity.CustomTag;
 import com.epam.esm.dao.entity.GiftCertificate;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Interface add BaseDao for work with GiftCertificate entity
  */
 public interface GiftCertificateDao extends BaseDao<GiftCertificate, Long> {
-
-    /**
-     * Update fully GiftCertificate
-     *
-     * @param giftCertificate entity to update
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate update(GiftCertificate giftCertificate);
-
-    /**
-     * Update GiftCertificate name
-     *
-     * @param name new name
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate updateName(Long id, String name);
-
-    /**
-     * Update GiftCertificate description
-     *
-     * @param description new description
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate updateDescription(Long id, String description);
-
-    /**
-     * Update GiftCertificate price
-     *
-     * @param price new price
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate updatePrice(Long id, BigDecimal price);
-
-    /**
-     * Update GiftCertificate duration
-     *
-     * @param duration new duration
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate updateDuration(Long id, Integer duration);
-
-    /**
-     * Update GiftCertificate tags
-     *
-     * @param tags new tag set
-     * @return GiftCertificates after updating
-     */
-    GiftCertificate updateTags(Long id, Set<CustomTag> tags);
 
     /**
      * Find GiftCertificates by parameters

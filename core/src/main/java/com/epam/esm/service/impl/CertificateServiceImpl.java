@@ -114,110 +114,11 @@ public class CertificateServiceImpl implements CertificateService {
                     + "; tags=" + dto.getTags()
                     , CustomErrorCode.NOT_VALID_DATA);
         }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        GiftCertificate certificate = new GiftCertificate();
-        String name = dto.getName();
-        if (name != null) {
-            certificate = dao.updateName(id, name);
-        }
-        String description = dto.getDescription();
-        if (description != null) {
-            certificate = dao.updateDescription(id, description);
-        }
-        BigDecimal price = dto.getPrice();
-        if (price != null) {
-            certificate = dao.updatePrice(id, price);
-        }
-        Integer duration = dto.getDuration();
-        if (duration != null) {
-            certificate = dao.updateDuration(id, duration);
-        }
-        Set<TagDto> dtoTags = dto.getTags();
-        if (dtoTags != null) {
-            dtoTags = prepareTagSet(dtoTags);
-            Set<CustomTag> tags = DtoEntityConvector.convertDtos(dtoTags);
-            certificate = dao.updateTags(id, tags);
-        }
-        return DtoEntityConvector.convert(certificate);
-    }
-
-    @Override
-    public CertificateDto updateName(long id, String name) throws CustomException {
-        CertificateDto dto = new CertificateDto();
-        dto.setName(name);
-        boolean isValid = validator.validateCertificateDtoUpdate(dto);
-        if (!isValid) {
-            throw new CustomException("name=" + name, CustomErrorCode.NOT_VALID_DATA);
-        }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        GiftCertificate certificate = dao.updateName(id, name);
-        return DtoEntityConvector.convert(certificate);
-    }
-
-    @Override
-    public CertificateDto updateDescription(long id, String description) throws CustomException {
-        CertificateDto dto = new CertificateDto();
-        dto.setDescription(description);
-        boolean isValid = validator.validateCertificateDtoUpdate(dto);
-        if (!isValid) {
-            throw new CustomException("description=" + description, CustomErrorCode.NOT_VALID_DATA);
-        }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        GiftCertificate certificate = dao.updateDescription(id, description);
-        return DtoEntityConvector.convert(certificate);
-    }
-
-    @Override
-    public CertificateDto updatePrice(long id, BigDecimal price) throws CustomException {
-        CertificateDto dto = new CertificateDto();
-        dto.setPrice(price);
-        boolean isValid = validator.validateCertificateDtoUpdate(dto);
-        if (!isValid) {
-            throw new CustomException("price=" + price, CustomErrorCode.NOT_VALID_DATA);
-        }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        GiftCertificate certificate = dao.updatePrice(id, price);
-        return DtoEntityConvector.convert(certificate);
-    }
-
-    @Override
-    public CertificateDto updateDuration(long id, Integer duration) throws CustomException {
-        CertificateDto dto = new CertificateDto();
-        dto.setDuration(duration);
-        boolean isValid = validator.validateCertificateDtoUpdate(dto);
-        if (!isValid) {
-            throw new CustomException("duration=" + duration, CustomErrorCode.NOT_VALID_DATA);
-        }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        GiftCertificate certificate = dao.updateDuration(id, duration);
-        return DtoEntityConvector.convert(certificate);
-    }
-
-    @Override
-    public CertificateDto updateTags(long id, Set<TagDto> tagDtos) throws CustomException {
-        CertificateDto dto = new CertificateDto();
-        dto.setTags(tagDtos);
-        boolean isValidName = validator.validateCertificateDtoUpdate(dto);
-        if (!isValidName) {
-            throw new CustomException("tags=" + tagDtos, CustomErrorCode.NOT_VALID_DATA);
-        }
-        if (dao.findById(id).isEmpty()) {
-            throw new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND);
-        }
-        tagDtos = prepareTagSet(tagDtos);
-        Set<CustomTag> tags = DtoEntityConvector.convertDtos(tagDtos);
-        GiftCertificate certificate = dao.updateTags(id, tags);
-        return DtoEntityConvector.convert(certificate);
+        GiftCertificate oldCertificate = dao.findById(id).orElseThrow(() ->
+                new CustomException("id=" + id, CustomErrorCode.RESOURCE_NOT_FOUND));
+        refreshGiftCertificate(dto, oldCertificate);
+        GiftCertificate updatedCertificate = dao.update(oldCertificate);
+        return DtoEntityConvector.convert(updatedCertificate);
     }
 
     @Override
@@ -268,6 +169,31 @@ public class CertificateServiceImpl implements CertificateService {
             throw new CustomException(Arrays.toString(tags), CustomErrorCode.NOT_VALID_DATA);
         }
         return dao.countByTags(tags);
+    }
+
+    private void refreshGiftCertificate(CertificateDto dto, GiftCertificate certificate) throws CustomException {
+        String name = dto.getName();
+        if (name != null) {
+            certificate.setName(name);
+        }
+        String description = dto.getDescription();
+        if (description != null) {
+            certificate.setDescription(description);
+        }
+        BigDecimal price = dto.getPrice();
+        if (price != null) {
+            certificate.setPrice(price);
+        }
+        Integer duration = dto.getDuration();
+        if (duration != null) {
+            certificate.setDuration(duration);
+        }
+        Set<TagDto> dtoTags = dto.getTags();
+        if (dtoTags != null) {
+            dtoTags = prepareTagSet(dtoTags);
+            Set<CustomTag> tags = DtoEntityConvector.convertDtos(dtoTags);
+            certificate.setTags(tags);
+        }
     }
 
     private Set<TagDto> prepareTagSet(Set<TagDto> dtos) throws CustomException {
