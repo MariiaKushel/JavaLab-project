@@ -32,8 +32,7 @@ public class CustomTagDaoImpl implements CustomTagDao {
             	) AS needed_user
             	JOIN orders ON needed_user.id_user=orders.id_user
                 JOIN orders_gift_certificates ON orders.id = orders_gift_certificates.id_order
-            	JOIN gift_certificates ON orders_gift_certificates.id_gift_certificate = gift_certificates.id
-            	JOIN gift_certificates_tags ON gift_certificates.id = gift_certificates_tags.id_gift_certificate
+            	JOIN gift_certificates_tags ON orders_gift_certificates.id_gift_certificate = gift_certificates_tags.id_gift_certificate
             	GROUP BY gift_certificates_tags.id_tag
             	ORDER BY num_tag DESC
             	LIMIT 1
