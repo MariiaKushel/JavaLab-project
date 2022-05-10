@@ -1,15 +1,16 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.pagination.Pagination;
 import com.epam.esm.service.CertificateService;
+import com.epam.esm.service.SearchParameterName;
 import com.epam.esm.service.dto.CertificateDto;
-import com.epam.esm.service.dto.TagDto;
+import com.epam.esm.util.LinkCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,10 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Rest controller represent CRUD operation on the GiftCertificate
@@ -36,10 +33,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping(value = "/certificates")
 public class CertificateController {
 
-    private static final String PAGE = "page";
-    private static final String SIZE = "size";
-    private static final String PREVIOUS_PAGE = "previousPage";
-    private static final String NEXT_PAGE = "nextPage";
     private CertificateService service;
 
     @Autowired
@@ -57,8 +50,8 @@ public class CertificateController {
     @GetMapping(value = "/{id}")
     public CertificateDto findCertificate(@PathVariable("id") long id) throws CustomException {
         CertificateDto certificate = service.findById(id);
-        addSelfLink(certificate);
-        return certificate;
+        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        return certificate.add(links);
     }
 
     /**
@@ -71,39 +64,27 @@ public class CertificateController {
      * @throws CustomException - if page or size has not valid value;
      */
     @GetMapping(params = {"page", "size"})
-    public CollectionModel<CertificateDto> findAllCertificates(@RequestParam("page") Integer page,
-                                                               @RequestParam("size") Integer size)
+    public CollectionModel<CertificateDto> findAllCertificates(
+            @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size)
             throws CustomException {
-        long quantity = service.count();
-        Pagination.check(page, size, quantity);
         List<CertificateDto> certificates = service.findAll(page, size);
-        for (CertificateDto certificate : certificates) {
-            addSelfLink(certificate);
-        }
-        Link listSelfLink = linkTo(methodOn(CertificateController.class)
-                .findAllCertificates(page, size))
-                .withSelfRel();
-        int previousPage = Pagination.previousPage(page);
-        Link previous = linkTo(methodOn(CertificateController.class)
-                .findAllCertificates(previousPage, size))
-                .withRel(PREVIOUS_PAGE);
-        int nextPage = Pagination.nextPage(page, size, quantity);
-        Link next = linkTo(methodOn(CertificateController.class)
-                .findAllCertificates(nextPage, size))
-                .withRel(NEXT_PAGE);
-        return CollectionModel.of(certificates, listSelfLink, previous, next);
+        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, page, size);
+        return CollectionModel.of(certificates, links);
     }
 
     /**
      * Method to delete GiftCertificate by id
      *
      * @param id GiftCertificate id
+     * @return no content ResponseEntity
      * @throws CustomException - if id has not valid value or GiftCertificate by id not found;
      */
     @DeleteMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCertificate(@PathVariable("id") long id) throws CustomException {
+    public ResponseEntity<?> deleteCertificate(@PathVariable("id") long id) throws CustomException {
         service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -120,8 +101,8 @@ public class CertificateController {
     public CertificateDto createCertificate(@RequestBody CertificateDto dto)
             throws CustomException {
         CertificateDto certificate = service.create(dto);
-        addSelfLink(certificate);
-        return certificate;
+        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        return certificate.add(links);
     }
 
     /**
@@ -138,49 +119,37 @@ public class CertificateController {
                                             @RequestBody CertificateDto dto)
             throws CustomException {
         CertificateDto certificate = service.update(id, dto);
-        addSelfLink(certificate);
-        return certificate;
+        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        return certificate.add(links);
     }
 
     /**
      * Method to get pagination GiftCertificate list with tags as GiftCertificateDto list by parameters.
      *
-     * @param page  - page
-     * @param size  - page size
-     * @param param - parameters map
-     *              Available parameters : tag (tag name), name (part of certificate name),
-     *              description (part of certificate description), sort_by (sorting type).
+     * @param page    - page
+     * @param size    - page size
+     * @param tag tag name
+     * @param name part of certificate name
+     * @description part of certificate description
+     * @param sortBy sorting type.
      * @return CollectionModel consist of GiftCertificateDto list or empty list if was not found anyone GiftCertificate
      * and links to previous and nex pages.
      * @throws CustomException if parameters map has not valid value;
      */
     @GetMapping(value = "/search")
     public CollectionModel<CertificateDto> findAllCertificatesByParameters(
-            @RequestParam("page") Integer page,
-            @RequestParam("size") Integer size,
-            @RequestParam Map<String, String> param)
-            throws CustomException {
-        Map<String, String> parameters = new HashMap<>(param);
-        parameters.remove(PAGE);
-        parameters.remove(SIZE);
-        long quantity = service.countByParameters(parameters);
-        Pagination.check(page, size, quantity);
+            @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(name = "tag", required = false) String tag,
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "description", required = false) String description,
+            @RequestParam(name = "sort_by", defaultValue = "date.asc", required = false) String sortBy
+    ) throws CustomException {
+        Map<String, String> parameters = collectParamToMap(tag, name, description, sortBy);
         List<CertificateDto> certificates = service.findAllByParameters(parameters, page, size);
-        for (CertificateDto certificate : certificates) {
-            addSelfLink(certificate);
-        }
-        Link listSelfLink = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByParameters(page, size, parameters))
-                .withSelfRel();
-        int previousPage = Pagination.previousPage(page);
-        Link previous = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByParameters(previousPage, size, parameters))
-                .withRel(PREVIOUS_PAGE);
-        int nextPage = Pagination.nextPage(page, size, quantity);
-        Link next = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByParameters(nextPage, size, parameters))
-                .withRel(NEXT_PAGE);
-        return CollectionModel.of(certificates, listSelfLink, previous, next);
+        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, tag, name, description,
+                sortBy, page, size);
+        return CollectionModel.of(certificates, links);
     }
 
     /**
@@ -197,41 +166,17 @@ public class CertificateController {
                                                                      @RequestParam("size") Integer size,
                                                                      @RequestParam("tags") String[] tags)
             throws CustomException {
-        long quantity = service.countByTags(tags);
-        Pagination.check(page, size, quantity);
         List<CertificateDto> certificates = service.findByTags(tags, page, size);
-        for (CertificateDto certificate : certificates) {
-            addSelfLink(certificate);
-        }
-        Link listSelfLink = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByTags(page, size, tags))
-                .withSelfRel();
-        int previousPage = Pagination.previousPage(page);
-        Link previous = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByTags(previousPage, size, tags))
-                .withRel(PREVIOUS_PAGE);
-        int nextPage = Pagination.nextPage(page, size, quantity);
-        Link next = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByTags(nextPage, size, tags))
-                .withRel(NEXT_PAGE);
-        return CollectionModel.of(certificates, listSelfLink, previous, next);
+        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, tags, page, size);
+        return CollectionModel.of(certificates, links);
     }
 
-    private void addSelfLink(CertificateDto certificate) throws CustomException {
-        Link selfLink = linkTo(methodOn(CertificateController.class)
-                .findCertificate(certificate.getId())).withSelfRel();
-        certificate.add(selfLink);
-        Set<TagDto> tags = certificate.getTags();
-        if (tags == null) {
-            return;
-        }
-        for (TagDto tag : tags) {
-            Link tagSelfLink = linkTo(methodOn(TagController.class)
-                    .findTag(tag.getId())).withSelfRel();
-            String[] tagName = new String[]{tag.getName()};
-            Link findByTagLink = linkTo(methodOn(CertificateController.class)
-                    .findAllCertificatesByTags(1, 10, tagName)).withRel("certificatesByTag");
-            tag.add(tagSelfLink, findByTagLink);
-        }
+    private Map<String, String> collectParamToMap(String tag, String name, String description, String sortBy) {
+        Map<String, String> param = new HashMap<>();
+        if (tag != null) param.put(SearchParameterName.TAG, tag);
+        if (name != null) param.put(SearchParameterName.NAME, name);
+        if (description != null) param.put(SearchParameterName.DESCRIPTION, description);
+        param.put(SearchParameterName.SORT_BY, sortBy);
+        return param;
     }
 }

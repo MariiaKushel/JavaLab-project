@@ -138,8 +138,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .map(TagDto::new)
                 .collect(Collectors.toSet());
         boolean isValidTags = dtos.stream().allMatch(validator::validateTagDto);
-        if (!isValidTags) {
-            throw new CustomException(Arrays.toString(tags), CustomErrorCode.NOT_VALID_DATA);
+        if (!isValidTags || tags.length == 0) {
+            throw new CustomException("tags=" + Arrays.toString(tags), CustomErrorCode.NOT_VALID_DATA);
         }
         List<GiftCertificate> certificates = dao.findByTags(page, size, tags);
         return DtoEntityConvector.convertCertificates(certificates);
@@ -165,8 +165,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .map(TagDto::new)
                 .collect(Collectors.toSet());
         boolean isValidTags = dtos.stream().allMatch(validator::validateTagDto);
-        if (!isValidTags) {
-            throw new CustomException(Arrays.toString(tags), CustomErrorCode.NOT_VALID_DATA);
+        if (!isValidTags || tags.length == 0) {
+            throw new CustomException("tags=" + Arrays.toString(tags), CustomErrorCode.NOT_VALID_DATA);
         }
         return dao.countByTags(tags);
     }

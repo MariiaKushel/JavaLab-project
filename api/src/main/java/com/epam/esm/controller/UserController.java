@@ -1,12 +1,12 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.pagination.Pagination;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.service.UserService;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
 import com.epam.esm.service.dto.UserDto;
+import com.epam.esm.util.LinkCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -22,9 +22,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Rest controller represent operation on User and their Orders
@@ -52,8 +49,8 @@ public class UserController {
     @GetMapping(value = "/{id}")
     public UserDto findUser(@PathVariable("id") long id) throws CustomException {
         UserDto user = userService.findById(id);
-        addSelfLink(user);
-        return user;
+        List<Link> links = LinkCreator.createSingleEntityLinks(user);
+        return user.add(links);
     }
 
     /**
@@ -68,20 +65,12 @@ public class UserController {
      */
     @GetMapping(value = "/{id}/orders")
     public CollectionModel<OrderDto> findOrders(@PathVariable("id") long id,
-                                                @RequestParam("page") Integer page,
-                                                @RequestParam("size") Integer size) throws CustomException {
-        long quantity = orderService.countByUser(id);
-        Pagination.check(page, size, quantity);
+                                                @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+                                                @RequestParam(name = "size", defaultValue = "10", required = false) int size)
+            throws CustomException {
         List<OrderDto> orders = orderService.findAllByUser(id, page, size);
-        for (OrderDto order : orders) {
-            addOrderLink(id, order);
-        }
-        int previousPage = Pagination.previousPage(page);
-        Link previous = linkTo(methodOn(UserController.class).findOrders(id, previousPage, size)).withRel("previousPage");
-        int nextPage = Pagination.nextPage(page, size, quantity);
-        Link next = linkTo(methodOn(UserController.class).findOrders(id, nextPage, size)).withRel("nextPage");
-        Link listSelfLink = linkTo(methodOn(UserController.class).findOrders(id, page, size)).withSelfRel();
-        return CollectionModel.of(orders, listSelfLink, previous, next);
+        List<Link> links = LinkCreator.createPaginationListEntityLinks(orders, id, page, size);
+        return CollectionModel.of(orders, links);
     }
 
     /**
@@ -95,8 +84,8 @@ public class UserController {
     @GetMapping(value = "/{id}/orders/{orderId}")
     public OrderDto findOrder(@PathVariable("id") long id, @PathVariable("orderId") long orderId) throws CustomException {
         OrderDto order = orderService.findByIdAndByUser(orderId, id);
-        addOrderLink(id, order);
-        return order;
+        List<Link> links = LinkCreator.createSingleEntityLinks(order, id);
+        return order.add(links);
     }
 
     /**
@@ -112,19 +101,7 @@ public class UserController {
     public OrderDto createOrder(@PathVariable("id") long id,
                                 @RequestBody List<CertificateDto> certificates) throws CustomException {
         OrderDto order = orderService.create(id, certificates);
-        addOrderLink(id, order);
-        return order;
-    }
-
-    private void addSelfLink(UserDto user) throws CustomException {
-        Link selfLink = linkTo(methodOn(UserController.class).findUser(user.getId())).withSelfRel();
-        Link ordersLink = linkTo(methodOn(UserController.class).findOrders(user.getId(), 1, 10))
-                .withRel("orders");
-        user.add(selfLink, ordersLink);
-    }
-
-    private void addOrderLink(long userId, OrderDto order) throws CustomException {
-        Link orderLink = linkTo(methodOn(UserController.class).findOrder(userId, order.getId())).withRel("order");
-        order.add(orderLink);
+        List<Link> links = LinkCreator.createSingleEntityLinks(order, id);
+        return order.add(links);
     }
 }

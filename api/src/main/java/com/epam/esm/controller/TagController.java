@@ -1,14 +1,15 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.pagination.Pagination;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.dto.TagDto;
+import com.epam.esm.util.LinkCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +21,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Rest controller represent CRD operation on the CustomTag
@@ -48,8 +46,8 @@ public class TagController {
     @GetMapping(value = "/{id}")
     public TagDto findTag(@PathVariable("id") long id) throws CustomException {
         TagDto tag = service.findById(id);
-        addSelfLink(tag);
-        return tag;
+        List<Link> links = LinkCreator.createSingleEntityLinks(tag);
+        return tag.add(links);
     }
 
     /**
@@ -62,22 +60,12 @@ public class TagController {
      * @throws CustomException - if page or size has not valid value;
      */
     @GetMapping
-    public CollectionModel<TagDto> findAllTags(@RequestParam("page") Integer page,
-                                               @RequestParam("size") Integer size)
+    public CollectionModel<TagDto> findAllTags(@RequestParam(name = "page", defaultValue = "1", required = false) int page,
+                                               @RequestParam(name = "size", defaultValue = "10", required = false) int size)
             throws CustomException {
-
-        long quantity = service.count();
-        Pagination.check(page, size, quantity);
         List<TagDto> tags = service.findAll(page, size);
-        for (TagDto tag : tags) {
-            addSelfLink(tag);
-        }
-        int previousPage = Pagination.previousPage(page);
-        Link previous = linkTo(methodOn(TagController.class).findAllTags(previousPage, size)).withRel("previousPage");
-        int nextPage = Pagination.nextPage(page, size, quantity);
-        Link next = linkTo(methodOn(TagController.class).findAllTags(nextPage, size)).withRel("nextPage");
-        Link listSelfLink = linkTo(methodOn(TagController.class).findAllTags(page, size)).withSelfRel();
-        return CollectionModel.of(tags, listSelfLink, previous, next);
+        List<Link> links = LinkCreator.createPaginationListEntityLinks(tags, page, size);
+        return CollectionModel.of(tags, links);
     }
 
 
@@ -85,12 +73,14 @@ public class TagController {
      * Method to delete CustomTag by id
      *
      * @param id CustomTag id
+     * @return no content ResponseEntity
      * @throws CustomException if id has not valid value;
      */
     @DeleteMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTag(@PathVariable("id") long id) throws CustomException {
+    public ResponseEntity<?> deleteTag(@PathVariable("id") long id) throws CustomException {
         service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -104,8 +94,8 @@ public class TagController {
     @ResponseStatus(HttpStatus.CREATED)
     public TagDto createCustomTag(@RequestBody TagDto tag) throws CustomException {
         TagDto newTag = service.create(tag);
-        addSelfLink(newTag);
-        return newTag;
+        List<Link> links = LinkCreator.createSingleEntityLinks(newTag);
+        return newTag.add(links);
     }
 
     /**
@@ -116,12 +106,7 @@ public class TagController {
     @GetMapping(value = "/the-most-widely")
     public TagDto findTheMostWidelyTag() throws CustomException {
         TagDto tag = service.findTheMostWidelyTag();
-        addSelfLink(tag);
-        return tag;
-    }
-
-    private void addSelfLink(TagDto tag) throws CustomException {
-        Link selfLink = linkTo(methodOn(TagController.class).findTag(tag.getId())).withSelfRel();
-        tag.add(selfLink);
+        List<Link> links = LinkCreator.createSingleEntityLinks(tag);
+        return tag.add(links);
     }
 }
