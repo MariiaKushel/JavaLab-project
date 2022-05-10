@@ -42,7 +42,7 @@ class UserControllerTest {
     private OrderService orderServiceMock;
 
     @Test
-    void findUser() throws Exception {
+    void findUser_returnUser_ok() throws Exception {
         UserDto user = new UserDto();
         user.setId(1L);
         Mockito.when(userServiceMock.findById(1L)).thenReturn(user);
@@ -58,7 +58,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findTagNotValidDataException() throws Exception {
+    void findTag_returnNotValidDataException_badRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(userServiceMock.findById(-1L)).thenThrow(ex);
 
@@ -72,7 +72,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findTagNotFoundException() throws Exception {
+    void findTag_returnNotFoundException_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.when(userServiceMock.findById(999L)).thenThrow(ex);
 
@@ -86,7 +86,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findOrders() throws Exception {
+    void findOrders_returnOrderList_ok() throws Exception {
         OrderDto order1 = new OrderDto();
         order1.setId(1L);
         OrderDto order2 = new OrderDto();
@@ -111,7 +111,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findOrder() throws Exception {
+    void findOrder_returnOrder_ok() throws Exception {
         OrderDto order = new OrderDto();
         order.setId(1L);
         Mockito.when(orderServiceMock.findByIdAndByUser(1L, 1L)).thenReturn(order);
@@ -126,7 +126,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findOrderNotValidDataException() throws Exception {
+    void findOrder_returnNotValidDataException_badRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(orderServiceMock.findByIdAndByUser(-1L, -1L)).thenThrow(ex);
 
@@ -140,7 +140,7 @@ class UserControllerTest {
     }
 
     @Test
-    void findOrderNotFoundException() throws Exception {
+    void findOrder_returnNotFoundException_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.when(orderServiceMock.findByIdAndByUser(1L, 1L)).thenThrow(ex);
 
@@ -155,7 +155,7 @@ class UserControllerTest {
 
 
     @Test
-    void createOrder() throws Exception {
+    void createOrder_returnOrder_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();

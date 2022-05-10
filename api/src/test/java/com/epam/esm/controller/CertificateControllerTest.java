@@ -42,7 +42,7 @@ class CertificateControllerTest {
     private CertificateService serviceMock;
 
     @Test
-    void findCertificate() throws Exception {
+    void findCertificate_returnCertificate_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(1L);
         dto.setName("name");
@@ -73,7 +73,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findCertificateExceptionNotValidException() throws Exception {
+    void findCertificate_returnExceptionNotValidException_badRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.findById(Mockito.anyLong())).thenThrow(ex);
 
@@ -87,7 +87,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findCertificateResourceNotFoundException() throws Exception {
+    void findCertificate_returnResourceNotFoundException_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.when(serviceMock.findById(Mockito.anyLong())).thenThrow(ex);
 
@@ -101,7 +101,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificates() throws Exception {
+    void findAllCertificates_returnCertificateList_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -123,7 +123,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificate() throws Exception {
+    void deleteCertificate_returnEmpty_noContent() throws Exception {
         Mockito.doNothing().when(serviceMock).delete(Mockito.anyLong());
 
         mockMvc.perform(delete("/certificates/1"))
@@ -134,7 +134,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificateNotValidDataException() throws Exception {
+    void deleteCertificate_returnNotValidDataException_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.doThrow(ex).when(serviceMock).delete(-1L);
 
@@ -148,7 +148,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificateResourceNotFoundException() throws Exception {
+    void deleteCertificate_returnResourceNotFoundException_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.doThrow(ex).when(serviceMock).delete(999L);
 
@@ -162,7 +162,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificate() throws Exception {
+    void createCertificate_returnCertificate_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(55L);
         Mockito.when(serviceMock.create(Mockito.any())).thenReturn(dto);
@@ -183,7 +183,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificateNotValidDataException() throws Exception {
+    void createCertificate_returnNotValidDataException_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -202,7 +202,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificateResourceAlreadyExistException() throws Exception {
+    void createCertificate_returnResourceAlreadyExistException_conflict() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_ALREADY_EXIST);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -221,7 +221,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateGiftCertificate() throws Exception {
+    void updateGiftCertificate_returnCertificate_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(55L);
         Mockito.when(serviceMock.update(Mockito.anyLong(), Mockito.any())).thenReturn(dto);
@@ -242,7 +242,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateCertificateNotValidDataException() throws Exception {
+    void updateCertificate_returnNotValidDataException_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.update(Mockito.anyLong(), Mockito.any())).thenThrow(ex);
 
@@ -261,7 +261,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateCertificateResourceNotFoundException() throws Exception {
+    void updateCertificate_returnResourceNotFoundException_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.doThrow(ex).when(serviceMock).update(Mockito.anyLong(), Mockito.any());
 
@@ -281,7 +281,7 @@ class CertificateControllerTest {
 
 
     @Test
-    void findAllCertificatesByParameters() throws Exception {
+    void findAllCertificatesByParameters_returnCertificate_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -305,7 +305,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificatesByParametersNotValidDataException() throws Exception {
+    void findAllCertificatesByParameters_returnNotValidDataException_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.findAllByParameters(Mockito.any(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(ex);
         Mockito.when(serviceMock.countByParameters(Mockito.anyMap())).thenReturn(1000L);
