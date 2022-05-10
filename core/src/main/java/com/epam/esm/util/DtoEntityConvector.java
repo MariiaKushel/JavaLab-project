@@ -2,9 +2,16 @@ package com.epam.esm.util;
 
 import com.epam.esm.dao.entity.CustomTag;
 import com.epam.esm.dao.entity.GiftCertificate;
-import com.epam.esm.service.dto.GiftCertificateDto;
+import com.epam.esm.dao.entity.Order;
+import com.epam.esm.dao.entity.User;
+import com.epam.esm.service.dto.CertificateDto;
+import com.epam.esm.service.dto.OrderDto;
+import com.epam.esm.service.dto.TagDto;
+import com.epam.esm.service.dto.UserDto;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Util class helps to convert GiftCertificate to GiftCertificateDto and vice versa
@@ -12,37 +19,157 @@ import java.util.List;
 public class DtoEntityConvector {
 
     /**
-     * Method helps to make blank GiftCertificate from GiftCertificateDto for create or update operations
-     * @param giftCertificateDto GiftCertificateDto, significant fields - name, description, duration, price
-     * @return blank of GiftCertificate
+     * Convert CustomTag to TagDto
+     *
+     * @param tag Custom Tag
+     * @return TagDto
      */
-    public static GiftCertificate convert(GiftCertificateDto giftCertificateDto) {
-        GiftCertificate giftCertificate = GiftCertificate.newBuilder()
-                .setName(giftCertificateDto.getName())
-                .setDescription(giftCertificateDto.getDescription())
-                .setDuration(giftCertificateDto.getDuration())
-                .setPrice(giftCertificateDto.getPrice())
-                .build();
-        return giftCertificate;
+    public static TagDto convert(CustomTag tag) {
+        TagDto dto = new TagDto();
+        dto.setId(tag.getId());
+        dto.setName(tag.getName());
+        return dto;
     }
 
     /**
-     * Method helps to make GiftCertificateDto from GiftCertificate and list of its tags
-     * @param giftCertificate - GiftCertificate
-     * @param tags - list of GiftCertificate`s tags
-     * @return GiftCertificateDto to view
+     * Convert CustomTag list to TagDto list
+     *
+     * @param tags Custom Tag list
+     * @return TagDto list
      */
-    public static GiftCertificateDto convert(GiftCertificate giftCertificate, List<CustomTag> tags) {
-        GiftCertificateDto giftCertificateDto = new GiftCertificateDto();
-        giftCertificateDto.setDtoId(giftCertificate.getId());
-        giftCertificateDto.setName(giftCertificate.getName());
-        giftCertificateDto.setDescription(giftCertificate.getDescription());
-        giftCertificateDto.setPrice(giftCertificate.getPrice());
-        giftCertificateDto.setDuration(giftCertificate.getDuration());
-        giftCertificateDto.setCreateDate(giftCertificate.getCreateDate());
-        giftCertificateDto.setLastUpdateDate(giftCertificate.getLastUpdateDate());
-        giftCertificateDto.setTags(tags);
-        return giftCertificateDto;
+    public static List<TagDto> convertTags(List<CustomTag> tags) {
+        return tags.stream()
+                .map(DtoEntityConvector::convert)
+                .toList();
+    }
+
+    /**
+     * Convert CustomTag set to TagDto set
+     *
+     * @param tags Custom Tag set
+     * @return TagDto set
+     */
+    public static Set<TagDto> convertTags(Set<CustomTag> tags) {
+        return tags.stream()
+                .map(DtoEntityConvector::convert)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Convert TagDto to CustomTag
+     *
+     * @param dto TagDto
+     * @return CustomTag
+     */
+    public static CustomTag convert(TagDto dto) {
+        CustomTag tag = new CustomTag();
+        tag.setId(dto.getId());
+        tag.setName(dto.getName());
+        return tag;
+    }
+
+    /**
+     * Convert TagDto set to CustomTag set
+     *
+     * @param dtos TagDto set
+     * @return CustomTag set
+     */
+    public static Set<CustomTag> convertDtos(Set<TagDto> dtos) {
+        return dtos.stream()
+                .map(DtoEntityConvector::convert)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Convert GiftCertificate to CertificateDto
+     *
+     * @param certificate GiftCertificate
+     * @return CertificateDto
+     */
+    public static CertificateDto convert(GiftCertificate certificate) {
+        CertificateDto dto = new CertificateDto();
+        dto.setId(certificate.getId());
+        dto.setName(certificate.getName());
+        dto.setDescription(certificate.getDescription());
+        dto.setPrice(certificate.getPrice());
+        dto.setDuration(certificate.getDuration());
+        dto.setCreateDate(certificate.getCreateDate());
+        dto.setLastUpdateDate(certificate.getLastUpdateDate());
+        Set<CustomTag> tags = certificate.getTags();
+        Set<TagDto> tagDtos = convertTags(tags);
+        dto.setTags(tagDtos);
+        return dto;
+    }
+
+    /**
+     * Convert GiftCertificate list to CertificateDto list
+     *
+     * @param certificates GiftCertificate list
+     * @return CertificateDto list
+     */
+    public static List<CertificateDto> convertCertificates(List<GiftCertificate> certificates) {
+        return certificates.stream()
+                .map(DtoEntityConvector::convert)
+                .toList();
+    }
+
+    /**
+     * Convert CertificateDto to GiftCertificate
+     *
+     * @param dto CertificateDto
+     * @return GiftCertificate
+     */
+    public static GiftCertificate convert(CertificateDto dto) {
+        GiftCertificate certificate = new GiftCertificate();
+        certificate.setId(dto.getId());
+        certificate.setName(dto.getName());
+        certificate.setDescription(dto.getDescription());
+        certificate.setPrice(dto.getPrice());
+        certificate.setDuration(dto.getDuration());
+        Set<TagDto> dtos = dto.getTags();
+        Set<CustomTag> tags = convertDtos(dtos);
+        certificate.setTags(tags);
+        return certificate;
+    }
+
+    /**
+     * Convert User to UserDto
+     *
+     * @param user User
+     * @return UserDto
+     */
+    public static UserDto convert(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setLogin(user.getLogin());
+        dto.setName(user.getName());
+        return dto;
+    }
+
+    /**
+     * Convert Order to OrderDto
+     *
+     * @param order Order
+     * @return OrderDto
+     */
+    public static OrderDto convert(Order order) {
+        OrderDto dto = new OrderDto();
+        dto.setId(order.getId());
+        dto.setPurchaseDate(order.getPurchaseDate());
+        dto.setAmount(order.getAmount());
+        return dto;
+    }
+
+    /**
+     * Convert Order list to OrderDto list
+     *
+     * @param orders Order list
+     * @return OrderDto list
+     */
+    public static List<OrderDto> convertOrders(List<Order> orders) {
+        return orders.stream()
+                .map(DtoEntityConvector::convert)
+                .toList();
     }
 
 }

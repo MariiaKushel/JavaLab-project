@@ -1,142 +1,81 @@
 package com.epam.esm.dao.entity;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Class represent GiftCertificate entity
  */
+@Data
+@EqualsAndHashCode(callSuper = true, exclude = {"tags", "orders"})
+@ToString(callSuper = true, exclude = {"tags", "orders"})
+@Entity
+@Table(name = "gift_certificates")
 public class GiftCertificate extends BaseEntity {
 
+    @Column(name = "name")
     private String name;
+    @Column(name = "description")
     private String description;
+    @Column(name = "price")
     private BigDecimal price;
+    @Column(name = "duration")
     private int duration;
+    @Column(name = "create_date")
     private LocalDateTime createDate;
+    @Column(name = "last_update_date")
     private LocalDateTime lastUpdateDate;
 
-    private GiftCertificate() {
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "gift_certificates_tags",
+            joinColumns = @JoinColumn(name = "id_gift_certificate"),
+            inverseJoinColumns = @JoinColumn(name = "id_tag"))
+    private Set<CustomTag> tags;
 
+    @ManyToMany(mappedBy = "giftCertificatesList", fetch = FetchType.LAZY)
+    private Set<Order> orders;
+
+    public GiftCertificate() {
+        this.tags = new HashSet<>();
+        this.orders = new HashSet<>();
     }
 
-    public static Builder newBuilder() {
-        return new GiftCertificate().new Builder();
+    @PrePersist
+    public void preSave() {
+        LocalDateTime now = LocalDateTime.now();
+        createDate = now;
+        lastUpdateDate = now;
     }
 
-    public class Builder {
-        private Builder() {
+    @PreUpdate
+    public void preUpdate() {
+        LocalDateTime now = LocalDateTime.now();
+        lastUpdateDate = now;
+    }
 
-        }
-
-        public Builder setEntityId(long entityId) {
-            GiftCertificate.this.setId(entityId);
-            return this;
-        }
-
-        public Builder setName(String name) {
-            GiftCertificate.this.name = name;
-            return this;
-        }
-
-        public Builder setDescription(String description) {
-            GiftCertificate.this.description = description;
-            return this;
-        }
-
-        public Builder setPrice(BigDecimal price) {
-            GiftCertificate.this.price = price;
-            return this;
-        }
-
-        public Builder setDuration(int duration) {
-            GiftCertificate.this.duration = duration;
-            return this;
-        }
-
-        public Builder setCreateDate(LocalDateTime createDate) {
-            GiftCertificate.this.createDate = createDate;
-            return this;
-        }
-
-        public Builder setLastUpdateDate(LocalDateTime lastUpdateDate) {
-            GiftCertificate.this.lastUpdateDate = lastUpdateDate;
-            return this;
-        }
-
-        public GiftCertificate build() {
-            return GiftCertificate.this;
+    @PreRemove
+    public void removeOrderCoupling() {
+        for (Order order : orders) {
+            order.getGiftCertificatesList().remove(this);
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public LocalDateTime getCreateDate() {
-        return createDate;
-    }
-
-    public LocalDateTime getLastUpdateDate() {
-        return lastUpdateDate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        GiftCertificate that = (GiftCertificate) o;
-
-        if (duration != that.duration) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (price != null ? !price.equals(that.price) : that.price != null) return false;
-        if (createDate != null ? !createDate.equals(that.createDate) : that.createDate != null) return false;
-        return lastUpdateDate != null ? lastUpdateDate.equals(that.lastUpdateDate) : that.lastUpdateDate == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (price != null ? price.hashCode() : 0);
-        result = 31 * result + duration;
-        result = 31 * result + (createDate != null ? createDate.hashCode() : 0);
-        result = 31 * result + (lastUpdateDate != null ? lastUpdateDate.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return new StringBuilder()
-                .append("GiftCertificate [")
-                .append("name=")
-                .append(name)
-                .append(", description=")
-                .append(description)
-                .append(", price=")
-                .append(price)
-                .append(", duration=")
-                .append(duration)
-                .append(", createDate=")
-                .append(createDate)
-                .append(", lastUpdateDate=")
-                .append(lastUpdateDate)
-                .append("]")
-                .toString();
-    }
 }

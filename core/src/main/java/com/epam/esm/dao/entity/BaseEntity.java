@@ -1,18 +1,21 @@
 package com.epam.esm.dao.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 
 /**
  * Class represent the abstract database entity
  */
 @Data
 @NoArgsConstructor
-@Entity
+@AllArgsConstructor
+@MappedSuperclass
 public abstract class BaseEntity {
 
     @Id
