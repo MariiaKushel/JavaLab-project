@@ -278,11 +278,6 @@ class CertificateServiceImplTest {
         certificate.setId(1L);
         Mockito.when(validatorMock.validateCertificateDtoUpdate(Mockito.any())).thenReturn(true);
         Mockito.when(daoMock.findById(Mockito.anyLong())).thenReturn(Optional.of(certificate));
-        Mockito.when(daoMock.updateName(Mockito.anyLong(), Mockito.anyString())).thenReturn(certificate);
-        Mockito.when(daoMock.updateDescription(Mockito.anyLong(), Mockito.anyString())).thenReturn(certificate);
-        Mockito.when(daoMock.updatePrice(Mockito.anyLong(), Mockito.any(BigDecimal.class))).thenReturn(certificate);
-        Mockito.when(daoMock.updateDuration(Mockito.anyLong(), Mockito.anyInt())).thenReturn(certificate);
-        Mockito.when(daoMock.updateTags(Mockito.anyLong(), Mockito.anySet())).thenReturn(certificate);
 
         CertificateDto dto = new CertificateDto();
         dto.setName("new name");
@@ -296,16 +291,6 @@ class CertificateServiceImplTest {
 
         Mockito.verify(validatorMock, Mockito.times(1)).validateCertificateDtoUpdate(Mockito.any());
         Mockito.verify(daoMock, Mockito.times(1)).findById(Mockito.anyLong());
-        Mockito.verify(daoMock, Mockito.times(1)).updateName(Mockito.anyLong(),
-                Mockito.anyString());
-        Mockito.verify(daoMock, Mockito.times(1)).updateDescription(Mockito.anyLong(),
-                Mockito.anyString());
-        Mockito.verify(daoMock, Mockito.times(1)).updatePrice(Mockito.anyLong(),
-                Mockito.any(BigDecimal.class));
-        Mockito.verify(daoMock, Mockito.times(1)).updateDuration(Mockito.anyLong(),
-                Mockito.anyInt());
-        Mockito.verify(daoMock, Mockito.times(1)).updateTags(Mockito.anyLong(),
-                Mockito.anySet());
         Assertions.assertEquals(actual, expected);
     }
 

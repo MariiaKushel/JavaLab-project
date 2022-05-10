@@ -38,7 +38,7 @@ class TagControllerTest {
     private TagService serviceMock;
 
     @Test
-    void findTag_returnTag_ok() throws Exception {
+    void findTag_existentTagId_ok() throws Exception {
         TagDto tag = new TagDto(1L, "tag");
         Mockito.when(serviceMock.findById(1L)).thenReturn(tag);
 
@@ -53,7 +53,7 @@ class TagControllerTest {
     }
 
     @Test
-    void findTag_returnNotValidDataException_badRequest() throws Exception {
+    void findTag_notValidData_badRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.findById(-1L)).thenThrow(ex);
 
@@ -67,7 +67,7 @@ class TagControllerTest {
     }
 
     @Test
-    void findTag_returnNotFoundException_notFound() throws Exception {
+    void findTag_nonExistentTagId_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.when(serviceMock.findById(999L)).thenThrow(ex);
 
@@ -81,7 +81,7 @@ class TagControllerTest {
     }
 
     @Test
-    void findAllTag_returnTagList_ok() throws Exception {
+    void findAllTag_correctPaginationParameters_ok() throws Exception {
         TagDto tag1 = new TagDto(1L, "tag1");
         TagDto tag2 = new TagDto(2L, "tag2");
         TagDto tag3 = new TagDto(3L, "tag3");
@@ -103,7 +103,7 @@ class TagControllerTest {
     }
 
     @Test
-    void deleteTag_returnEmpty_noContent() throws Exception {
+    void deleteTag_existentTagId_noContent() throws Exception {
         Mockito.doNothing().when(serviceMock).delete(Mockito.anyLong());
 
         mockMvc.perform(delete("/tags/1"))
@@ -114,7 +114,7 @@ class TagControllerTest {
     }
 
     @Test
-    void deleteTag_returnNotValidDataException_bagRequest() throws Exception {
+    void deleteTag_notValidData_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.doThrow(ex).when(serviceMock).delete(-1L);
 
@@ -128,7 +128,7 @@ class TagControllerTest {
     }
 
     @Test
-    void deleteTag_returnNotFoundException_notFound() throws Exception {
+    void deleteTag_nonExistentTagId_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.doThrow(ex).when(serviceMock).delete(999L);
 
@@ -142,7 +142,7 @@ class TagControllerTest {
     }
 
     @Test
-    void createTag_returnTag_ok() throws Exception {
+    void createTag_correctTadData_ok() throws Exception {
         TagDto newTag = new TagDto(5L, "new_tag");
         Mockito.when(serviceMock.create(Mockito.any())).thenReturn(newTag);
 
@@ -162,7 +162,7 @@ class TagControllerTest {
     }
 
     @Test
-    void createTag_returnNotValidDataException_bagRequest() throws Exception {
+    void createTag_notValidData_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -181,7 +181,7 @@ class TagControllerTest {
     }
 
     @Test
-    void createTag_returnResourceAlreadyExistException_conflict() throws Exception {
+    void createTag_existentTagData_conflict() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_ALREADY_EXIST);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -200,7 +200,7 @@ class TagControllerTest {
     }
 
     @Test
-    void findTheMostWidelyTag_returnTag_ok() throws Exception {
+    void findTheMostWidelyTag_emptyParam_ok() throws Exception {
         TagDto tag = new TagDto(1L, "tag");
         Mockito.when(serviceMock.findTheMostWidelyTag()).thenReturn(tag);
 
