@@ -1,13 +1,14 @@
 package com.epam.esm.dao;
 
 import com.epam.esm.dao.entity.CustomTag;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.Optional;
 
 /**
- * Interface add BaseDao for work with CustomTag entity
+ * Interface for database operation with CustomTag entity
  */
-public interface CustomTagDao extends BaseDao<CustomTag, Long> {
+public interface CustomTagDao extends PagingAndSortingRepository<CustomTag, Long> {
 
     /**
      * Find CustomTag by name

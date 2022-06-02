@@ -48,7 +48,6 @@ public class Order extends BaseEntity {
 
     @PrePersist
     public void preSave() {
-        LocalDateTime now = LocalDateTime.now();
-        purchaseDate = now;
+        purchaseDate = LocalDateTime.now();
     }
 }

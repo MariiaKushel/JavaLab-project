@@ -45,7 +45,7 @@ public class CustomExceptionAdvice {
     }
 
     /**
-     * Method catches CustomException and generates response entity.
+     * Method catches Exception and generates response entity.
      *
      * @param e - Exception
      * @return - response entity consist body - ExceptionResponse and HttpStatus
@@ -55,8 +55,7 @@ public class CustomExceptionAdvice {
         int errorCode = CustomErrorCode.INTERNAL_SERVER_EXCEPTION.getCode();
         String message = messageSource.getMessage(String.valueOf(errorCode),
                 null, LocaleContextHolder.getLocale())
-                + e.getMessage()
-                + e.getCause();
+                + e.getMessage();
         HttpStatus httpStatus = CustomErrorCode.INTERNAL_SERVER_EXCEPTION.getHttpStatus();
         ExceptionResponse exceptionResponse = new ExceptionResponse(message, errorCode);
         return new ResponseEntity<>(exceptionResponse, httpStatus);

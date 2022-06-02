@@ -1,16 +1,23 @@
 package com.epam.esm.controller;
 
+import com.epam.esm.enumeration.AppRole;
 import com.epam.esm.exception.CustomException;
+import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.CertificateService;
-import com.epam.esm.service.SearchParameterName;
+import com.epam.esm.enumeration.SearchParameterName;
 import com.epam.esm.service.dto.CertificateDto;
-import com.epam.esm.util.LinkCreator;
+import com.epam.esm.util.JwtDecoder;
+import com.epam.esm.util.impl.AdminCollectionLinkCreator;
+import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
+import com.epam.esm.util.impl.CommonCollectionLinkCreator;
+import com.epam.esm.util.impl.CommonSingleEntityLinkCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,10 +41,25 @@ import java.util.Map;
 public class CertificateController {
 
     private CertificateService service;
+    private AdminSingleEntityLinkCreator adminSingleEntityLinkCreator;
+    private CommonSingleEntityLinkCreator commonSingleEntityLinkCreator;
+    private AdminCollectionLinkCreator adminCollectionLinkCreator;
+    private CommonCollectionLinkCreator commonCollectionLinkCreator;
+    private JwtProperty jwtProperty;
 
     @Autowired
-    public CertificateController(CertificateService service) {
+    public CertificateController(CertificateService service,
+                                 AdminSingleEntityLinkCreator adminSingleEntityLinkCreator,
+                                 CommonSingleEntityLinkCreator commonSingleEntityLinkCreator,
+                                 AdminCollectionLinkCreator adminCollectionLinkCreator,
+                                 CommonCollectionLinkCreator commonCollectionLinkCreator,
+                                 JwtProperty jwtProperty) {
         this.service = service;
+        this.adminSingleEntityLinkCreator = adminSingleEntityLinkCreator;
+        this.commonSingleEntityLinkCreator = commonSingleEntityLinkCreator;
+        this.adminCollectionLinkCreator = adminCollectionLinkCreator;
+        this.commonCollectionLinkCreator = commonCollectionLinkCreator;
+        this.jwtProperty = jwtProperty;
     }
 
     /**
@@ -48,9 +70,12 @@ public class CertificateController {
      * @throws CustomException - if GiftCertificate was not found or id has not valid value;
      */
     @GetMapping(value = "/{id}")
-    public CertificateDto findCertificate(@PathVariable("id") long id) throws CustomException {
+    public CertificateDto findCertificate(@CookieValue(name = "JWT", required = false) String jwt,
+                                          @PathVariable("id") long id) throws CustomException {
         CertificateDto certificate = service.findById(id);
-        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+                ? adminSingleEntityLinkCreator.createLinks(certificate)
+                : commonSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
     }
 
@@ -63,13 +88,17 @@ public class CertificateController {
      * and links to previous and nex pages.
      * @throws CustomException - if page or size has not valid value;
      */
-    @GetMapping(params = {"page", "size"})
+    @GetMapping
     public CollectionModel<CertificateDto> findAllCertificates(
+            @CookieValue(name = "JWT", required = false) String jwt,
             @RequestParam(name = "page", defaultValue = "1", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size)
             throws CustomException {
         List<CertificateDto> certificates = service.findAll(page, size);
-        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, page, size);
+        int lastPage = service.findAllLastPage(size);
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+                ? adminCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage)
+                : commonCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage);
         return CollectionModel.of(certificates, links);
     }
 
@@ -96,12 +125,12 @@ public class CertificateController {
      * @throws CustomException if CertificateDto has not valid value of fields
      *                         or if GiftCertificate with such value of fields already exist;
      */
-    @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public CertificateDto createCertificate(@RequestBody CertificateDto dto)
             throws CustomException {
         CertificateDto certificate = service.create(dto);
-        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        List<Link> links = adminSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
     }
 
@@ -119,18 +148,18 @@ public class CertificateController {
                                             @RequestBody CertificateDto dto)
             throws CustomException {
         CertificateDto certificate = service.update(id, dto);
-        List<Link> links = LinkCreator.createSingleEntityLinks(certificate);
+        List<Link> links = adminSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
     }
 
     /**
      * Method to get pagination GiftCertificate list with tags as GiftCertificateDto list by parameters.
      *
-     * @param page    - page
-     * @param size    - page size
-     * @param tag tag name
-     * @param name part of certificate name
-     * @description part of certificate description
+     * @param page   - page
+     * @param size   - page size
+     * @param tag    tag name
+     * @param name   part of certificate name
+     * @param description part of certificate description
      * @param sortBy sorting type.
      * @return CollectionModel consist of GiftCertificateDto list or empty list if was not found anyone GiftCertificate
      * and links to previous and nex pages.
@@ -138,6 +167,7 @@ public class CertificateController {
      */
     @GetMapping(value = "/search")
     public CollectionModel<CertificateDto> findAllCertificatesByParameters(
+            @CookieValue(name = "JWT", required = false) String jwt,
             @RequestParam(name = "page", defaultValue = "1", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             @RequestParam(name = "tag", required = false) String tag,
@@ -145,10 +175,14 @@ public class CertificateController {
             @RequestParam(name = "description", required = false) String description,
             @RequestParam(name = "sort_by", defaultValue = "date.asc", required = false) String sortBy
     ) throws CustomException {
-        Map<String, String> parameters = collectParamToMap(tag, name, description, sortBy);
+        Map<SearchParameterName, String> parameters = collectParamToMap(tag, name, description, sortBy);
         List<CertificateDto> certificates = service.findAllByParameters(parameters, page, size);
-        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, tag, name, description,
-                sortBy, page, size);
+        int lastPage = service.findAllByParametersLastPage(parameters, size);
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+                ? adminCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
+                sortBy, page, size, lastPage)
+                : commonCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
+                sortBy, page, size, lastPage);
         return CollectionModel.of(certificates, links);
     }
 
@@ -161,21 +195,27 @@ public class CertificateController {
      * and links to previous and nex pages.
      * @throws CustomException if the tag array has not valid value or page or size has not valid data;
      */
-    @GetMapping(params = {"tags", "page", "size"})
-    public CollectionModel<CertificateDto> findAllCertificatesByTags(@RequestParam("page") Integer page,
-                                                                     @RequestParam("size") Integer size,
-                                                                     @RequestParam("tags") String[] tags)
+    @GetMapping(params = "tags")
+    public CollectionModel<CertificateDto> findAllCertificatesByTags(
+            @CookieValue(name = "JWT", required = false) String jwt,
+            @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(name = "tags") String[] tags)
             throws CustomException {
-        List<CertificateDto> certificates = service.findByTags(tags, page, size);
-        List<Link> links = LinkCreator.createPaginationCertificateListLinks(certificates, tags, page, size);
+        List<CertificateDto> certificates = service.findAllByTags(tags, page, size);
+        int lastPage = service.findAllByTagsLastPage(tags, size);
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+                ? adminCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage)
+                : commonCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage);
         return CollectionModel.of(certificates, links);
     }
 
-    private Map<String, String> collectParamToMap(String tag, String name, String description, String sortBy) {
-        Map<String, String> param = new HashMap<>();
+    private Map<SearchParameterName, String> collectParamToMap(String tag, String name, String description, String sortBy) {
+        Map<SearchParameterName, String> param = new HashMap<>();
         if (tag != null) param.put(SearchParameterName.TAG, tag);
         if (name != null) param.put(SearchParameterName.NAME, name);
         if (description != null) param.put(SearchParameterName.DESCRIPTION, description);
+        param.put(SearchParameterName.ACTIVE, "true");
         param.put(SearchParameterName.SORT_BY, sortBy);
         return param;
     }

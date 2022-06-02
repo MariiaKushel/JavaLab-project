@@ -26,7 +26,7 @@ public interface TagService {
      * @param size page size
      * @return CustomTag list as TagDto list or empty list if no one CustomTag was not found
      */
-    List<TagDto> findAll(int page, int size);
+    List<TagDto> findAll(int page, int size) throws CustomException;
 
     /**
      * Delete CustomTag by id
@@ -54,11 +54,12 @@ public interface TagService {
      */
     TagDto findTheMostWidelyTag();
 
-
     /**
-     * Count all CustomTags
+     * Find the last page by all tags
      *
-     * @return quantity of CustomTags
+     * @param size page size
+     * @return last page value
+     * @throws CustomException if size has not valid value
      */
-    long count();
+    int findAllLastPage(int size) throws CustomException;
 }

@@ -1,6 +1,7 @@
 package com.epam.esm;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -28,11 +29,12 @@ class TestDataGenerator {
     private static final int num_30 = 30;
     private static final int num_5 = 5;
 
-    private static final String GC_INSERT_STATIC_PART_1 = "INSERT INTO `gift_certificates` (`name`, `description`, `price`, `duration`, `create_date`, `last_update_date`) VALUES ('certificate ";
+    private static final String GC_INSERT_STATIC_PART_1 = "INSERT INTO `gift_certificates` (`name`, `description`, `price`, `duration`, `create_date`, `last_update_date`, `active`) VALUES ('certificate ";
     private static final String GC_INSERT_STATIC_PART_2 = "', 'description ";
     private static final String TAG_INSERT_STATIC_PART = "INSERT INTO `tags` (`name`) VALUES ('tag_";
+    private static final String ROLE_INSERT_STATIC_PART = "INSERT INTO `roles` (`name`) VALUES ('";
     private static final String GC_TAG_COUPLING_INSERT_STATIC_PART = "INSERT INTO `gift_certificates_tags` (`id_gift_certificate`, `id_tag`) VALUES ('";
-    private static final String USER_INSERT_STATIC_PART = "INSERT INTO `users` (`login`, `password`, `name`) VALUES ('";
+    private static final String USER_INSERT_STATIC_PART = "INSERT INTO `users` (`login`, `password`, `name`, `id_role`) VALUES ('";
     private static final String ORDER_INSERT_STATIC_PART = "INSERT INTO `orders` (`id_user`, `purchase_date`, `amount`) VALUES ('";
     private static final String ORDER_GC_COUPLING_INSERT_STATIC_PART = "INSERT INTO `orders_gift_certificates` (`id_order`, `id_gift_certificate`) VALUES ('";
 
@@ -44,6 +46,7 @@ class TestDataGenerator {
         generateTags(PATH_TO_DATA);
         generateGiftCertificates(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateGiftCertificateTagCoupling(PATH_TO_DATA, StandardOpenOption.APPEND);
+        generateRoles(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateUsers(PATH_TO_DATA, StandardOpenOption.APPEND);
         Map<Long, BigDecimal> amountByOrders = generateOrders(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateOrderGiftCertificateCoupling(amountByOrders, PATH_TO_DATA, StandardOpenOption.APPEND);
@@ -75,6 +78,8 @@ class TestDataGenerator {
             sb.append(date); // 'create date'
             sb.append(COMMA);
             sb.append(date); // 'last update date'
+            sb.append(COMMA);
+            sb.append(1); // 'active'
             sb.append(COMMA_BRACKET);
 
             giftCertificates.add(sb.toString());
@@ -108,12 +113,12 @@ class TestDataGenerator {
             if (i % num_1000 != 0) {
                 long secondTag = firstTag + 1;
                 tagsId.add(secondTag);
-                if (secondTag!=num_1000) {
+                if (secondTag != num_1000) {
                     tagsId.add(secondTag + 1);
                 }
             }
 
-            while (tagsId.size()>0) {
+            while (tagsId.size() > 0) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(GC_TAG_COUPLING_INSERT_STATIC_PART);
                 sb.append(i);
@@ -129,9 +134,27 @@ class TestDataGenerator {
         Files.write(path, couplings, option);
     }
 
+    private void generateRoles(Path path, StandardOpenOption... option) throws IOException {
+        List<String> roles = new ArrayList<>();
+
+        StringBuilder sbUser = new StringBuilder();
+        sbUser.append(ROLE_INSERT_STATIC_PART);
+        sbUser.append("ROLE_USER");
+        sbUser.append(COMMA_BRACKET);
+        StringBuilder sbAdmin = new StringBuilder();
+        sbAdmin.append(ROLE_INSERT_STATIC_PART);
+        sbAdmin.append("ROLE_ADMIN");
+        sbAdmin.append(COMMA_BRACKET);
+        roles.add(sbUser.toString());
+        roles.add(sbAdmin.toString());
+
+        Files.write(path, roles, option);
+    }
+
     private void generateUsers(Path path, StandardOpenOption... option) throws IOException {
         List<String> users = new ArrayList<>();
         Random random = new Random();
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         List<String> names = new ArrayList<>();
         names.add("Vasya");
         names.add("Petr");
@@ -145,13 +168,13 @@ class TestDataGenerator {
         names.add("Mick");
         names.add("Mary");
 
-        for (int i = 1; i <= num_1000; i++) {
+        for (int i = 1; i <= num_1000 + 1; i++) {
             StringBuilder sb = new StringBuilder();
             sb.append(USER_INSERT_STATIC_PART);
-            sb.append(i);
+            sb.append(i != 1001 ? i : "admin");
             sb.append("@gmail.com");
             sb.append(COMMA);
-            sb.append(i);
+            sb.append(encoder.encode(String.valueOf(i != 1001 ? i : "admin")));
             sb.append(COMMA);
 
             int nameIndex = random.nextInt(names.size());
@@ -159,10 +182,13 @@ class TestDataGenerator {
             sb.append(name);
             sb.append("_");
             sb.append(i);
+            sb.append(COMMA);
+            sb.append(i != 1001 ? 1 : 2);
             sb.append(COMMA_BRACKET);
 
             users.add(sb.toString());
         }
+
         Files.write(path, users, option);
     }
 

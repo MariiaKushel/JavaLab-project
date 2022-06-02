@@ -1,20 +1,19 @@
 package com.epam.esm.dao;
 
 import com.epam.esm.dao.entity.User;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 
 /**
- * Interface add BaseDao for work with Order entity
+ * Interface for database operation with User entity
  */
-public interface UserDao extends BaseDao<User, Long> {
+public interface UserDao extends CrudRepository<User, Long> {
+
     /**
-     * Find User by login and password
-     *
-     * @param login    user login
-     * @param password user password
+     * Find User by login
+     * @param login user login
      * @return Optional representation of User or empty Optional, if User was not found
      */
-    Optional<User> findByLoginAndPassword(String login, String password);
-
+    Optional<User> findByLogin(String login);
 }
