@@ -1,7 +1,7 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.config.ApiConfig;
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.properties.JwtProperty;
@@ -68,7 +68,7 @@ class RegistrationControllerTest {
         dto.setId(42L);
         dto.setUsername("42@gmail.com");
         dto.setName("Petr");
-        dto.setRole(AppRole.ROLE_USER);
+        dto.setRole(UserRole.ROLE_USER);
         Mockito.when(userServiceMock.create(Mockito.any(RegistrationFormDto.class))).thenReturn(dto);
 
         String jsonContent = mapper.writeValueAsString(form);

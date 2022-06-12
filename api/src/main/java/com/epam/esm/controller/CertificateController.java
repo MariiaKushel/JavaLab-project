@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.CertificateService;
@@ -73,7 +73,7 @@ public class CertificateController {
     public CertificateDto findCertificate(@CookieValue(name = "JWT", required = false) String jwt,
                                           @PathVariable("id") long id) throws CustomException {
         CertificateDto certificate = service.findById(id);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminSingleEntityLinkCreator.createLinks(certificate)
                 : commonSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
@@ -96,7 +96,7 @@ public class CertificateController {
             throws CustomException {
         List<CertificateDto> certificates = service.findAll(page, size);
         int lastPage = service.findAllLastPage(size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage);
         return CollectionModel.of(certificates, links);
@@ -178,7 +178,7 @@ public class CertificateController {
         Map<SearchParameterName, String> parameters = collectParamToMap(tag, name, description, sortBy);
         List<CertificateDto> certificates = service.findAllByParameters(parameters, page, size);
         int lastPage = service.findAllByParametersLastPage(parameters, size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
                 sortBy, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
@@ -204,7 +204,7 @@ public class CertificateController {
             throws CustomException {
         List<CertificateDto> certificates = service.findAllByTags(tags, page, size);
         int lastPage = service.findAllByTagsLastPage(tags, size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage);
         return CollectionModel.of(certificates, links);

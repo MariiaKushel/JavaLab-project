@@ -1,6 +1,6 @@
 package com.epam.esm.security;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -11,9 +11,9 @@ import java.util.Set;
  */
 public class CustomUserDetails extends User {
     private Long userId;
-    private AppRole role;
+    private UserRole role;
 
-    public CustomUserDetails(String username, String password, AppRole role, Long userId) {
+    public CustomUserDetails(String username, String password, UserRole role, Long userId) {
         super(username,
                 password,
                 true,

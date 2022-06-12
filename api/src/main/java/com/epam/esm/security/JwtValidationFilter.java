@@ -1,6 +1,6 @@
 package com.epam.esm.security;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomInvalidJWTokenException;
 import com.epam.esm.properties.JwtProperty;
@@ -74,7 +74,7 @@ public class JwtValidationFilter extends OncePerRequestFilter {
         String username = claims.getSubject();
         if (username != null) {
             Long userId = claims.get(this.jwtProperty.getUserIdPropertyName(), Long.class);
-            AppRole role = AppRole.valueOf(claims.get(this.jwtProperty.getRolePropertyName(), String.class));
+            UserRole role = UserRole.valueOf(claims.get(this.jwtProperty.getRolePropertyName(), String.class));
             CustomUserDetails details = new CustomUserDetails(username, "", role, userId);
             return new UsernamePasswordAuthenticationToken(details, null, Set.of (new SimpleGrantedAuthority(role.name())));
         }

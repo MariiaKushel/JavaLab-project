@@ -1,6 +1,6 @@
 package com.epam.esm.service.dto;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +19,6 @@ public class UserDto extends RepresentationModel<UserDto> {
     private Long id;
     private String username;
     private String name;
-    private AppRole role;
+    private UserRole role;
 
 }

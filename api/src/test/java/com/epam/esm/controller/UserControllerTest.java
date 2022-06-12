@@ -1,9 +1,8 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.config.ApiConfig;
-import com.epam.esm.dao.entity.Role;
 import com.epam.esm.dao.entity.User;
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.properties.JwtProperty;
@@ -101,7 +100,7 @@ class UserControllerTest {
         userDto.setId(1L);
         userDto.setName("1@gmail.com");
         userDto.setName("Petr");
-        userDto.setRole(AppRole.ROLE_USER);
+        userDto.setRole(UserRole.ROLE_USER);
         Mockito.when(userServiceMock.findById(Mockito.anyLong())).thenReturn(userDto);
 
         mockMvc.perform(get("/user")

@@ -1,6 +1,6 @@
 package com.epam.esm.util;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.properties.JwtProperty;
 import io.jsonwebtoken.Jwts;
 
@@ -32,12 +32,12 @@ public class JwtDecoder {
      * @param jwtProperty jwt properties
      * @return user role
      */
-    public static AppRole decodeRole(String jwt, JwtProperty jwtProperty) {
+    public static UserRole decodeRole(String jwt, JwtProperty jwtProperty) {
         String roleAsString = Jwts.parser()
                 .setSigningKey(Base64.getEncoder().encodeToString(jwtProperty.getSecret().getBytes()))
                 .parseClaimsJws(jwt)
                 .getBody()
                 .get(jwtProperty.getRolePropertyName(), String.class);
-        return AppRole.valueOf(roleAsString);
+        return UserRole.valueOf(roleAsString);
     }
 }

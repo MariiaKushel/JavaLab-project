@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.TagService;
@@ -89,7 +89,7 @@ public class TagController {
             throws CustomException {
         List<TagDto> tags = service.findAll(page, size);
         int lastPage = service.findAllLastPage(size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminCollectionLinkCreator.createLinks(tags, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinks(tags, page, size, lastPage);
         return CollectionModel.of(tags, links);
@@ -138,7 +138,7 @@ public class TagController {
     }
 
     private List<Link> getSingleEntityLinksByRole(String jwt, TagDto tag) throws CustomException {
-        return (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == AppRole.ROLE_ADMIN)
+        return (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
                 ? adminSingleEntityLinkCreator.createLinks(tag)
                 : commonSingleEntityLinkCreator.createLinks(tag);
     }

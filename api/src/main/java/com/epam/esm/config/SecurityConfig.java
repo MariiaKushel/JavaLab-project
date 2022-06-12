@@ -1,6 +1,6 @@
 package com.epam.esm.config;
 
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.security.CustomAccessDeniedHandler;
 import com.epam.esm.security.JwtAuthenticationEntryPoint;
@@ -68,18 +68,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
 
                 .antMatchers(HttpMethod.POST, "/certificates/**", "/tags/**")
-                .hasAuthority(AppRole.ROLE_ADMIN.name())
+                .hasAuthority(UserRole.ROLE_ADMIN.name())
                 .antMatchers(HttpMethod.DELETE, "/certificates/**", "/tags/**")
-                .hasAuthority(AppRole.ROLE_ADMIN.name())
+                .hasAuthority(UserRole.ROLE_ADMIN.name())
                 .antMatchers(HttpMethod.PATCH, "/certificates/**")
-                .hasAuthority(AppRole.ROLE_ADMIN.name())
+                .hasAuthority(UserRole.ROLE_ADMIN.name())
                 .antMatchers(HttpMethod.GET, "/admin", "/admin/users/**/orders", "/admin/users/**/orders/**")
-                .hasAuthority(AppRole.ROLE_ADMIN.name())
+                .hasAuthority(UserRole.ROLE_ADMIN.name())
 
                 .antMatchers(HttpMethod.GET, "/user", "/user/orders", "/user/orders/**")
-                .hasAuthority(AppRole.ROLE_USER.name())
+                .hasAuthority(UserRole.ROLE_USER.name())
                 .antMatchers(HttpMethod.POST, "/user/orders")
-                .hasAuthority(AppRole.ROLE_USER.name())
+                .hasAuthority(UserRole.ROLE_USER.name())
 
                 .anyRequest()
                 .authenticated()

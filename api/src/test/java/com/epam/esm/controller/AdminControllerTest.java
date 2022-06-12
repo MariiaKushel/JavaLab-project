@@ -1,9 +1,8 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.config.ApiConfig;
-import com.epam.esm.dao.entity.Role;
 import com.epam.esm.dao.entity.User;
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.properties.JwtProperty;
@@ -62,20 +61,14 @@ class AdminControllerTest {
         existentUser.setLogin("1@gmail.com");
         existentUser.setPassword("$2a$10$/eDeS0UCI/TDHdkHBBgYtOVlrTR.P6.uYnERH7z4jcMCvTyXKM7MS");
         existentUser.setName("Petr");
-        Role roleUser = new Role();
-        roleUser.setId(1L);
-        roleUser.setName("ROLE_USER");
-        existentUser.setRole(roleUser);
+        existentUser.setRole(UserRole.ROLE_USER);
 
         existentAdmin = new User();
         existentAdmin.setId(1001L);
         existentAdmin.setLogin("admin@gmail.com");
         existentAdmin.setPassword("$10$8AqdT3Ks6YjuEFUlA9Y2feE/j/zHRUohmKaDu8xvu/j3V4EEnyLZO");
         existentAdmin.setName("Vasiay");
-        Role roleAdmin = new Role();
-        roleAdmin.setId(2L);
-        roleAdmin.setName("ROLE_ADMIN");
-        existentAdmin.setRole(roleAdmin);
+        existentAdmin.setRole(UserRole.ROLE_ADMIN);
 
         String userJwtCookieValue = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxQGdtYWlsLmNvbSIsInVzZXJJZCI6MSwicm9sZSI6IlJPTEVfV"
                 + "VNFUiJ9.EddlZP2UHYF9kmHURWj-aM9A-Z8e-UMNgle33R_wtH8GKjq7foxvWnWUuIwRuBqwVHEOo1ijVRb-OJDMqTmiTw";
@@ -93,7 +86,7 @@ class AdminControllerTest {
         userDto.setId(1001L);
         userDto.setName("admin@gmail.com");
         userDto.setName("Vasiay");
-        userDto.setRole(AppRole.ROLE_ADMIN);
+        userDto.setRole(UserRole.ROLE_ADMIN);
         Mockito.when(userServiceMock.findById(Mockito.anyLong())).thenReturn(userDto);
 
         mockMvc.perform(get("/admin")

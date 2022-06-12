@@ -1,7 +1,7 @@
 package com.epam.esm.security;
 
 import com.epam.esm.dao.entity.User;
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class SecurityService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             User user = service.findByUsernameForSecurity(username);
-            AppRole role = AppRole.valueOf(user.getRole().getName());
+            UserRole role = UserRole.valueOf(user.getRole().getName());
             return new CustomUserDetails(user.getLogin(), user.getPassword(), role, user.getId());
         } catch (CustomException e) {
             throw new UsernameNotFoundException("");

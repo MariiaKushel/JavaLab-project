@@ -4,7 +4,6 @@ import com.epam.esm.dao.entity.CustomTag;
 import com.epam.esm.dao.entity.GiftCertificate;
 import com.epam.esm.dao.entity.Order;
 import com.epam.esm.dao.entity.User;
-import com.epam.esm.enumeration.AppRole;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
 import com.epam.esm.service.dto.RegistrationFormDto;
@@ -145,8 +144,7 @@ public class DtoEntityConvector {
         dto.setId(user.getId());
         dto.setUsername(user.getLogin());
         dto.setName(user.getName());
-        String role = user.getRole().getName();
-        dto.setRole(AppRole.valueOf(role));
+        dto.setRole(user.getRole());
         return dto;
     }
 

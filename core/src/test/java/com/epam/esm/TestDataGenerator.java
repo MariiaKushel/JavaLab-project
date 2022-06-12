@@ -32,9 +32,8 @@ class TestDataGenerator {
     private static final String GC_INSERT_STATIC_PART_1 = "INSERT INTO `gift_certificates` (`name`, `description`, `price`, `duration`, `create_date`, `last_update_date`, `active`) VALUES ('certificate ";
     private static final String GC_INSERT_STATIC_PART_2 = "', 'description ";
     private static final String TAG_INSERT_STATIC_PART = "INSERT INTO `tags` (`name`) VALUES ('tag_";
-    private static final String ROLE_INSERT_STATIC_PART = "INSERT INTO `roles` (`name`) VALUES ('";
     private static final String GC_TAG_COUPLING_INSERT_STATIC_PART = "INSERT INTO `gift_certificates_tags` (`id_gift_certificate`, `id_tag`) VALUES ('";
-    private static final String USER_INSERT_STATIC_PART = "INSERT INTO `users` (`login`, `password`, `name`, `id_role`) VALUES ('";
+    private static final String USER_INSERT_STATIC_PART = "INSERT INTO `users` (`login`, `password`, `name`, `role`) VALUES ('";
     private static final String ORDER_INSERT_STATIC_PART = "INSERT INTO `orders` (`id_user`, `purchase_date`, `amount`) VALUES ('";
     private static final String ORDER_GC_COUPLING_INSERT_STATIC_PART = "INSERT INTO `orders_gift_certificates` (`id_order`, `id_gift_certificate`) VALUES ('";
 
@@ -46,7 +45,6 @@ class TestDataGenerator {
         generateTags(PATH_TO_DATA);
         generateGiftCertificates(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateGiftCertificateTagCoupling(PATH_TO_DATA, StandardOpenOption.APPEND);
-        generateRoles(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateUsers(PATH_TO_DATA, StandardOpenOption.APPEND);
         Map<Long, BigDecimal> amountByOrders = generateOrders(PATH_TO_DATA, StandardOpenOption.APPEND);
         generateOrderGiftCertificateCoupling(amountByOrders, PATH_TO_DATA, StandardOpenOption.APPEND);
@@ -134,23 +132,6 @@ class TestDataGenerator {
         Files.write(path, couplings, option);
     }
 
-    private void generateRoles(Path path, StandardOpenOption... option) throws IOException {
-        List<String> roles = new ArrayList<>();
-
-        StringBuilder sbUser = new StringBuilder();
-        sbUser.append(ROLE_INSERT_STATIC_PART);
-        sbUser.append("ROLE_USER");
-        sbUser.append(COMMA_BRACKET);
-        StringBuilder sbAdmin = new StringBuilder();
-        sbAdmin.append(ROLE_INSERT_STATIC_PART);
-        sbAdmin.append("ROLE_ADMIN");
-        sbAdmin.append(COMMA_BRACKET);
-        roles.add(sbUser.toString());
-        roles.add(sbAdmin.toString());
-
-        Files.write(path, roles, option);
-    }
-
     private void generateUsers(Path path, StandardOpenOption... option) throws IOException {
         List<String> users = new ArrayList<>();
         Random random = new Random();
@@ -174,6 +155,7 @@ class TestDataGenerator {
             sb.append(i != 1001 ? i : "admin");
             sb.append("@gmail.com");
             sb.append(COMMA);
+            sb.append("{bcrypt}");
             sb.append(encoder.encode(String.valueOf(i != 1001 ? i : "admin")));
             sb.append(COMMA);
 
@@ -183,7 +165,7 @@ class TestDataGenerator {
             sb.append("_");
             sb.append(i);
             sb.append(COMMA);
-            sb.append(i != 1001 ? 1 : 2);
+            sb.append(i != 1001 ? "ROLE_USER" : "ROLE_ADMIN");
             sb.append(COMMA_BRACKET);
 
             users.add(sb.toString());

@@ -1,10 +1,8 @@
 package com.epam.esm.service.impl;
 
-import com.epam.esm.dao.RoleDao;
 import com.epam.esm.dao.UserDao;
-import com.epam.esm.dao.entity.Role;
 import com.epam.esm.dao.entity.User;
-import com.epam.esm.enumeration.AppRole;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.UserService;
@@ -25,13 +23,11 @@ import static com.epam.esm.exception.CustomErrorCode.RESOURCE_NOT_FOUND;
 public class UserServiceImpl implements UserService {
 
     private UserDao userDao;
-    private RoleDao roleDao;
     private CustomValidator validator;
 
     @Autowired
-    public UserServiceImpl(UserDao userDao, RoleDao roleDao, CustomValidator validator) {
+    public UserServiceImpl(UserDao userDao, CustomValidator validator) {
         this.userDao = userDao;
-        this.roleDao = roleDao;
         this.validator = validator;
     }
 
@@ -66,8 +62,7 @@ public class UserServiceImpl implements UserService {
         String secretPassword = encoder.encode(registrationForm.getPassword());
         registrationForm.setPassword(secretPassword);
         User newUser = DtoEntityConvector.convert(registrationForm);
-        Role role = roleDao.findByName(AppRole.ROLE_USER.name()).get();
-        newUser.setRole(role);
+        newUser.setRole(UserRole.ROLE_USER);
         User user = userDao.save(newUser);
         return DtoEntityConvector.convert(user);
     }

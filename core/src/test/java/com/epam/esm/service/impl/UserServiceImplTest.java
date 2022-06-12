@@ -1,9 +1,8 @@
 package com.epam.esm.service.impl;
 
-import com.epam.esm.dao.RoleDao;
 import com.epam.esm.dao.UserDao;
-import com.epam.esm.dao.entity.Role;
 import com.epam.esm.dao.entity.User;
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.UserService;
@@ -21,27 +20,22 @@ import java.util.Optional;
 class UserServiceImplTest {
 
     private UserDao userDaoMock;
-    private RoleDao roleDaoMock;
     private CustomValidator validatorMock;
     private UserService service;
 
     public UserServiceImplTest() {
         this.userDaoMock = Mockito.mock(UserDao.class);
-        this.roleDaoMock = Mockito.mock(RoleDao.class);
         this.validatorMock = Mockito.mock(CustomValidator.class);
-        this.service = new UserServiceImpl(userDaoMock, roleDaoMock, validatorMock);
+        this.service = new UserServiceImpl(userDaoMock, validatorMock);
     }
 
     @Test
     void findById() throws CustomException {
-        Role role = new Role();
-        role.setId(1L);
-        role.setName("ROLE_USER");
         User user = new User();
         user.setLogin("ivan@gmail.com");
         user.setPassword("ivan_password");
         user.setName("Ivan");
-        user.setRole(role);
+        user.setRole(UserRole.ROLE_USER);
         Mockito.when(validatorMock.validateEntityId(Mockito.anyLong())).thenReturn(true);
         Mockito.when(userDaoMock.findById(Mockito.anyLong())).thenReturn(Optional.of(user));
         UserDto expected = DtoEntityConvector.convert(user);
@@ -79,20 +73,16 @@ class UserServiceImplTest {
 
     @Test
     void create() throws CustomException {
-        Role role = new Role();
-        role.setId(1L);
-        role.setName("ROLE_USER");
         User user = new User();
         user.setLogin("ivan@gmail.com");
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String secretPassword = encoder.encode("ivan_password");
         user.setPassword(secretPassword);
         user.setName("Ivan");
-        user.setRole(role);
+        user.setRole(UserRole.ROLE_USER);
         Mockito.when(validatorMock.validateUsername(Mockito.anyString())).thenReturn(true);
         Mockito.when(userDaoMock.findByLogin(Mockito.anyString())).thenReturn(Optional.empty());
         Mockito.when(validatorMock.validateRegistrationForm(Mockito.any())).thenReturn(true);
-        Mockito.when(roleDaoMock.findByName(Mockito.anyString())).thenReturn(Optional.of(role));
         Mockito.when(userDaoMock.save(Mockito.any())).thenReturn(user);
 
         RegistrationFormDto form =
@@ -103,7 +93,6 @@ class UserServiceImplTest {
         Mockito.verify(validatorMock, Mockito.times(1)).validateUsername(Mockito.anyString());
         Mockito.verify(userDaoMock, Mockito.times(1)).findByLogin(Mockito.anyString());
         Mockito.verify(validatorMock, Mockito.times(1)).validateRegistrationForm(Mockito.any());
-        Mockito.verify(roleDaoMock, Mockito.times(1)).findByName(Mockito.anyString());
         Mockito.verify(userDaoMock, Mockito.times(1)).save(Mockito.any());
 
         Assertions.assertEquals(expected, actual);
@@ -160,14 +149,11 @@ class UserServiceImplTest {
 
     @Test
     void findByUsernameForSecurity() throws CustomException {
-        Role role = new Role();
-        role.setId(1L);
-        role.setName("ROLE_USER");
         User user = new User();
         user.setLogin("ivan@gmail.com");
         user.setPassword("ivan_password");
         user.setName("Ivan");
-        user.setRole(role);
+        user.setRole(UserRole.ROLE_USER);
         Mockito.when(validatorMock.validateUsername(Mockito.anyString())).thenReturn(true);
         Mockito.when(userDaoMock.findByLogin(Mockito.anyString())).thenReturn(Optional.of(user));
         User actual = service.findByUsernameForSecurity("ivan@gmail.com");
