@@ -13,7 +13,6 @@ public interface LinkCreator {
     String ORDERS = "orders";
     String CREATE_ORDER = "createOrder";
     String USER = "user";
-    String ADMIN = "admin";
     String SEARCH = "search";
     String FIND_BY_TAGS = "findByTags";
     String CURRENT_PAGE = "currentPage";

@@ -1,12 +1,10 @@
 package com.epam.esm.controller;
 
+import com.epam.esm.enumeration.SearchParameterName;
 import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.CertificateService;
-import com.epam.esm.enumeration.SearchParameterName;
 import com.epam.esm.service.dto.CertificateDto;
-import com.epam.esm.util.JwtDecoder;
 import com.epam.esm.util.impl.AdminCollectionLinkCreator;
 import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
 import com.epam.esm.util.impl.CommonCollectionLinkCreator;
@@ -17,7 +15,9 @@ import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,40 +40,40 @@ import java.util.Map;
 @RequestMapping(value = "/certificates")
 public class CertificateController {
 
+    private static final String ROLE_CLAIM_KEY = "authorities";
+
     private CertificateService service;
     private AdminSingleEntityLinkCreator adminSingleEntityLinkCreator;
     private CommonSingleEntityLinkCreator commonSingleEntityLinkCreator;
     private AdminCollectionLinkCreator adminCollectionLinkCreator;
     private CommonCollectionLinkCreator commonCollectionLinkCreator;
-    private JwtProperty jwtProperty;
 
     @Autowired
     public CertificateController(CertificateService service,
                                  AdminSingleEntityLinkCreator adminSingleEntityLinkCreator,
                                  CommonSingleEntityLinkCreator commonSingleEntityLinkCreator,
                                  AdminCollectionLinkCreator adminCollectionLinkCreator,
-                                 CommonCollectionLinkCreator commonCollectionLinkCreator,
-                                 JwtProperty jwtProperty) {
+                                 CommonCollectionLinkCreator commonCollectionLinkCreator) {
         this.service = service;
         this.adminSingleEntityLinkCreator = adminSingleEntityLinkCreator;
         this.commonSingleEntityLinkCreator = commonSingleEntityLinkCreator;
         this.adminCollectionLinkCreator = adminCollectionLinkCreator;
         this.commonCollectionLinkCreator = commonCollectionLinkCreator;
-        this.jwtProperty = jwtProperty;
     }
 
     /**
      * Method to get GiftCertificate with tags as CertificateDto by id.
      *
+     * @param jwt access token
      * @param id GiftCertificate id
      * @return GiftCertificateDto
      * @throws CustomException - if GiftCertificate was not found or id has not valid value;
      */
     @GetMapping(value = "/{id}")
-    public CertificateDto findCertificate(@CookieValue(name = "JWT", required = false) String jwt,
+    public CertificateDto findCertificate(@AuthenticationPrincipal Jwt jwt,
                                           @PathVariable("id") long id) throws CustomException {
         CertificateDto certificate = service.findById(id);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminSingleEntityLinkCreator.createLinks(certificate)
                 : commonSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
@@ -82,6 +82,7 @@ public class CertificateController {
     /**
      * Method to get pagination GiftCertificate list with tags as CertificateDto list
      *
+     * @param jwt access token
      * @param page - page
      * @param size - page size
      * @return CollectionModel consist of list of GiftCertificateDto or empty list if was not found anyone GiftCertificate
@@ -90,13 +91,13 @@ public class CertificateController {
      */
     @GetMapping
     public CollectionModel<CertificateDto> findAllCertificates(
-            @CookieValue(name = "JWT", required = false) String jwt,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "page", defaultValue = "1", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size)
             throws CustomException {
         List<CertificateDto> certificates = service.findAll(page, size);
         int lastPage = service.findAllLastPage(size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage);
         return CollectionModel.of(certificates, links);
@@ -109,6 +110,7 @@ public class CertificateController {
      * @return no content ResponseEntity
      * @throws CustomException - if id has not valid value or GiftCertificate by id not found;
      */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<?> deleteCertificate(@PathVariable("id") long id) throws CustomException {
@@ -125,6 +127,7 @@ public class CertificateController {
      * @throws CustomException if CertificateDto has not valid value of fields
      *                         or if GiftCertificate with such value of fields already exist;
      */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public CertificateDto createCertificate(@RequestBody CertificateDto dto)
@@ -143,6 +146,7 @@ public class CertificateController {
      * @return CertificateDto contains updated GiftCertificate.
      * @throws CustomException if GiftCertificateDto has not valid value of fields or GiftCertificate by id not found;
      */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public CertificateDto updateCertificate(@PathVariable("id") long id,
                                             @RequestBody CertificateDto dto)
@@ -167,7 +171,7 @@ public class CertificateController {
      */
     @GetMapping(value = "/search")
     public CollectionModel<CertificateDto> findAllCertificatesByParameters(
-            @CookieValue(name = "JWT", required = false) String jwt,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "page", defaultValue = "1", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             @RequestParam(name = "tag", required = false) String tag,
@@ -178,7 +182,7 @@ public class CertificateController {
         Map<SearchParameterName, String> parameters = collectParamToMap(tag, name, description, sortBy);
         List<CertificateDto> certificates = service.findAllByParameters(parameters, page, size);
         int lastPage = service.findAllByParametersLastPage(parameters, size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
                 sortBy, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
@@ -197,14 +201,14 @@ public class CertificateController {
      */
     @GetMapping(params = "tags")
     public CollectionModel<CertificateDto> findAllCertificatesByTags(
-            @CookieValue(name = "JWT", required = false) String jwt,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "page", defaultValue = "1", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             @RequestParam(name = "tags") String[] tags)
             throws CustomException {
         List<CertificateDto> certificates = service.findAllByTags(tags, page, size);
         int lastPage = service.findAllByTagsLastPage(tags, size);
-        List<Link> links = (jwt != null && JwtDecoder.decodeRole(jwt, jwtProperty) == UserRole.ROLE_ADMIN)
+        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage);
         return CollectionModel.of(certificates, links);

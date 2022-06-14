@@ -1,8 +1,8 @@
 package com.epam.esm.util.impl;
 
-import com.epam.esm.controller.AdminController;
 import com.epam.esm.controller.CertificateController;
 import com.epam.esm.controller.TagController;
+import com.epam.esm.controller.UserController;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
@@ -38,30 +38,30 @@ public class AdminCollectionLinkCreator extends CollectionLinkCreator {
                                   int size,
                                   int lastPage) throws CustomException {
         for (OrderDto order : orders) {
-            order.add(linkTo(methodOn(AdminController.class).findOrderByUser(userId, order.getId())).withSelfRel());
+            order.add(linkTo(methodOn(UserController.class).findOrderByUser(userId, order.getId())).withSelfRel());
         }
         List<Link> links = new ArrayList<>();
-        Link firstPageLink = linkTo(methodOn(AdminController.class).findOrdersByUser(userId, 1, size))
+        Link firstPageLink = linkTo(methodOn(UserController.class).findOrdersByUser(userId, 1, size))
                 .withRel(FIRST_PAGE);
         links.add(firstPageLink);
         if (page > 1 && page <= lastPage) {
-            Link previousPageLink = linkTo(methodOn(AdminController.class)
+            Link previousPageLink = linkTo(methodOn(UserController.class)
                     .findOrdersByUser(userId, page - 1, size))
                     .withRel(PREVIOUS_PAGE);
             links.add(previousPageLink);
         }
-        Link currentPageLink = linkTo(methodOn(AdminController.class).findOrdersByUser(userId, page, size))
+        Link currentPageLink = linkTo(methodOn(UserController.class).findOrdersByUser(userId, page, size))
                 .withRel(CURRENT_PAGE);
         links.add(currentPageLink);
         if (page < lastPage) {
-            Link nexPageLink = linkTo(methodOn(AdminController.class).findOrdersByUser(userId, page + 1, size))
+            Link nexPageLink = linkTo(methodOn(UserController.class).findOrdersByUser(userId, page + 1, size))
                     .withRel(NEXT_PAGE);
             links.add(nexPageLink);
         }
-        Link lastPageLink = linkTo(methodOn(AdminController.class).findOrdersByUser(userId, lastPage, size))
+        Link lastPageLink = linkTo(methodOn(UserController.class).findOrdersByUser(userId, lastPage, size))
                 .withRel(LAST_PAGE);
         links.add(lastPageLink);
-        Link adminLink = linkTo(methodOn(AdminController.class).findAdmin("")).withRel(ADMIN);
+        Link adminLink = linkTo(methodOn(UserController.class).findUser(null)).withRel(USER);
         links.add(adminLink);
         return links;
     }

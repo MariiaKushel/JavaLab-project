@@ -1,10 +1,9 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.config.ApiConfig;
+import com.epam.esm.ResourceServerApplication;
 import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.UserService;
 import com.epam.esm.service.dto.RegistrationFormDto;
 import com.epam.esm.service.dto.UserDto;
@@ -16,19 +15,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.servlet.http.Cookie;
-
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RegistrationController.class)
-@ContextConfiguration(classes = {ApiConfig.class, TestConfig.class})
+@ContextConfiguration(classes = {ResourceServerApplication.class, TestConfig.class})
 class RegistrationControllerTest {
 
     @Autowired
@@ -38,27 +38,33 @@ class RegistrationControllerTest {
     private UserService userServiceMock;
 
     @Autowired
-    private JwtProperty jwtProperty;
-    @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private JwtGrantedAuthoritiesConverter customConverter;
 
-    private Cookie userJwtCookie;
-    private Cookie adminJwtCookie;
+    private Jwt userJwt;
+    private Jwt adminJwt;
 
     @BeforeEach
-    void beforeAll() {
-        String userJwtCookieValue = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxQGdtYWlsLmNvbSIsInVzZXJJZCI6MSwicm9sZSI6IlJPTEVfV"
-                + "VNFUiJ9.EddlZP2UHYF9kmHURWj-aM9A-Z8e-UMNgle33R_wtH8GKjq7foxvWnWUuIwRuBqwVHEOo1ijVRb-OJDMqTmiTw";
-        userJwtCookie = new Cookie(jwtProperty.getCookieName(), userJwtCookieValue);
-
-        String adminJwtCookieValue = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBnbWFpbC5jb20iLCJ1c2VySWQiOjEwMDUsIn"
-                + "JvbGUiOiJST0xFX0FETUlOIn0.UAtp-jJQnaAcIji32vtvPssWHSLUFzazIxjf03C_fOgks_i5OPXfaED1naa3zFEVTI"
-                + "haAhu9dZ6GBDrh55EyqA";
-        adminJwtCookie = new Cookie(jwtProperty.getCookieName(), adminJwtCookieValue);
+    void setUp() {
+        userJwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("scope", "all")
+                .claim("user_id", Long.valueOf(1L))
+                .claim("user_name", "1@gmail.com")
+                .claim("authorities", "ROLE_USER")
+                .build();
+        adminJwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("scope", "all")
+                .claim("user_id", Long.valueOf(1001L))
+                .claim("user_name", "admin@gmail.com")
+                .claim("authorities", "ROLE_ADMIN")
+                .build();
     }
 
     @Test
-    void createUser_guestWithoutJwtCookieAndCorrectRegistrationForm_ok() throws Exception {
+    void createUser_guestWithoutJwtAndCorrectRegistrationForm_ok() throws Exception {
         RegistrationFormDto form = new RegistrationFormDto();
         form.setUsername("42@gmail.com");
         form.setName("Petr");
@@ -89,7 +95,7 @@ class RegistrationControllerTest {
     }
 
     @Test
-    void createUser_guestWithoutJwtCookieAndNotValidUsername_bagRequest() throws Exception {
+    void createUser_guestWithoutJwtAndNotValidUsername_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(userServiceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -113,7 +119,7 @@ class RegistrationControllerTest {
     }
 
     @Test
-    void createUser_guestWithoutJwtCookieAndNotPasswordOrName_bagRequest() throws Exception {
+    void createUser_guestWithoutJwtAndNotPasswordOrName_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(userServiceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -137,7 +143,7 @@ class RegistrationControllerTest {
     }
 
     @Test
-    void createUser_guestWithoutJwtCookieAndExistentUserWithThatUsername_conflict() throws Exception {
+    void createUser_guestWithoutJwtAndExistentUserWithThatUsername_conflict() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_ALREADY_EXIST);
         Mockito.when(userServiceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -160,19 +166,34 @@ class RegistrationControllerTest {
     }
 
     @Test
-    void createUser_userJwtCookie_forbidden() throws Exception {
+    void createUser_userJwt_forbidden() throws Exception {
+        RegistrationFormDto form = new RegistrationFormDto();
+        form.setUsername("42@gmail.com");
+        form.setName("Petr");
+        form.setPassword("secret");
+
+        String jsonContent = mapper.writeValueAsString(form);
+
         mockMvc.perform(post("/registration")
-                        .cookie(userJwtCookie)
-                        .with(csrf()))
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void createUser_adminJwtCookie_forbidden() throws Exception {
+    void createUser_adminJwt_forbidden() throws Exception {
+        RegistrationFormDto form = new RegistrationFormDto();
+        form.setUsername("42@gmail.com");
+        form.setName("Petr");
+        form.setPassword("secret");
+
+        String jsonContent = mapper.writeValueAsString(form);
         mockMvc.perform(post("/registration")
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }

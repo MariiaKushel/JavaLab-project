@@ -7,6 +7,7 @@ import com.epam.esm.service.dto.UserDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Rest controller represent operation on User and their Orders
+ * Rest controller represent operation on registration new User.
  */
 @RestController
 @RequestMapping(value = "/registration")
@@ -27,9 +28,10 @@ public class RegistrationController {
         this.service = service;
     }
 
+    @PreAuthorize("isAnonymous()")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus (HttpStatus.CREATED)
-    public UserDto createUser (@RequestBody RegistrationFormDto form) throws CustomException {
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDto createUser(@RequestBody RegistrationFormDto form) throws CustomException {
         return service.create(form);
     }
 

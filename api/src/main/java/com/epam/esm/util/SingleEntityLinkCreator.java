@@ -2,8 +2,8 @@ package com.epam.esm.util;
 
 import com.epam.esm.controller.CertificateController;
 import com.epam.esm.controller.TagController;
-import com.epam.esm.exception.CustomException;
 import com.epam.esm.enumeration.SortingType;
+import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
 import com.epam.esm.service.dto.TagDto;
@@ -27,9 +27,9 @@ public abstract class SingleEntityLinkCreator implements LinkCreator {
      * @throws CustomException if some linked methods throw CustomException
      */
     public List<Link> createLinks(TagDto tag) throws CustomException {
-        Link selfLink = linkTo(methodOn(TagController.class).findTag("", tag.getId())).withSelfRel();
-        Link findAllLink = linkTo(methodOn(TagController.class).findAllTags("", 1, 10)).withRel(FIND_ALL);
-        Link findTheMostWidelyTagLink = linkTo(methodOn(TagController.class).findTheMostWidelyTag(""))
+        Link selfLink = linkTo(methodOn(TagController.class).findTag(null, tag.getId())).withSelfRel();
+        Link findAllLink = linkTo(methodOn(TagController.class).findAllTags(null, 1, 10)).withRel(FIND_ALL);
+        Link findTheMostWidelyTagLink = linkTo(methodOn(TagController.class).findTheMostWidelyTag(null))
                 .withRel(FIND_THE_MOST_WIDELY_TAG);
         return List.of(selfLink, findAllLink, findTheMostWidelyTagLink);
     }
@@ -60,25 +60,25 @@ public abstract class SingleEntityLinkCreator implements LinkCreator {
      */
     public List<Link> createLinks(CertificateDto certificate) throws CustomException {
         for (TagDto tag : certificate.getTags()) {
-            tag.add(linkTo(methodOn(TagController.class).findTag("", tag.getId())).withSelfRel());
+            tag.add(linkTo(methodOn(TagController.class).findTag(null, tag.getId())).withSelfRel());
         }
-        Link selfLink = linkTo(methodOn(CertificateController.class).findCertificate("", certificate.getId()))
+        Link selfLink = linkTo(methodOn(CertificateController.class).findCertificate(null, certificate.getId()))
                 .withSelfRel();
-        Link findAllLink = linkTo(methodOn(CertificateController.class).findAllCertificates("", 1, 10))
+        Link findAllLink = linkTo(methodOn(CertificateController.class).findAllCertificates(null, 1, 10))
                 .withRel(FIND_ALL);
         String tagName = certificate.getTags().stream()
                 .findFirst()
                 .map(TagDto::getName)
                 .orElse(null);
         Link searchLink = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByParameters("", 1, 10, tagName, certificate.getName(),
+                .findAllCertificatesByParameters(null, 1, 10, tagName, certificate.getName(),
                         certificate.getDescription(), SortingType.NAME_ASC.getType()))
                 .withRel(SEARCH);
         String[] tags = new String[certificate.getTags().size()];
         List<String> tagNames = certificate.getTags().stream().map(TagDto::getName).toList();
         tags = tagNames.toArray(tags);
         Link findByTagsLink = linkTo(methodOn(CertificateController.class)
-                .findAllCertificatesByTags("", 1, 10, tags))
+                .findAllCertificatesByTags(null, 1, 10, tags))
                 .withRel(FIND_BY_TAGS);
         return List.of(selfLink, findAllLink, searchLink, findByTagsLink);
     }

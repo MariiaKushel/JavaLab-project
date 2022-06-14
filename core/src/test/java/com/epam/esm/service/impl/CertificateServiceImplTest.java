@@ -194,7 +194,7 @@ class CertificateServiceImplTest {
     void create() throws CustomException {
         GiftCertificate certificate = new GiftCertificate();
         certificate.setId(1L);
-        CustomTag tag1 = new CustomTag(2L, "existed_tag");//
+        CustomTag tag1 = new CustomTag(2L, "existed_tag");
         CustomTag tag2 = new CustomTag(1L, "old_tag");
         Mockito.when(validatorMock.validateCertificateDtoCreate(Mockito.any())).thenReturn(true);
         Mockito.when(daoMock.findByNameAndDescriptionAndPriceAndDurationAndActive(Mockito.anyString(), Mockito.anyString(),

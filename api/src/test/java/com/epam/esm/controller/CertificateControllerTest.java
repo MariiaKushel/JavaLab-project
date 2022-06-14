@@ -1,17 +1,11 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.config.ApiConfig;
+import com.epam.esm.ResourceServerApplication;
 import com.epam.esm.exception.CustomErrorCode;
 import com.epam.esm.exception.CustomException;
-import com.epam.esm.properties.JwtProperty;
 import com.epam.esm.service.CertificateService;
-import com.epam.esm.service.UserService;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.TagDto;
-import com.epam.esm.util.impl.AdminCollectionLinkCreator;
-import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
-import com.epam.esm.util.impl.CommonCollectionLinkCreator;
-import com.epam.esm.util.impl.CommonSingleEntityLinkCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.servlet.http.Cookie;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -33,6 +28,7 @@ import java.util.Set;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -42,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CertificateController.class)
-@ContextConfiguration(classes = {ApiConfig.class, TestConfig.class})
+@ContextConfiguration(classes = {ResourceServerApplication.class, TestConfig.class})
 class CertificateControllerTest {
 
     @Autowired
@@ -50,38 +46,34 @@ class CertificateControllerTest {
 
     @MockBean
     private CertificateService serviceMock;
-    @MockBean
-    private UserService userServiceMock;
     @Autowired
-    private AdminSingleEntityLinkCreator adminSingleEntityLinkCreator;
+    private ObjectMapper mapper;
     @Autowired
-    private CommonSingleEntityLinkCreator commonSingleEntityLinkCreator;
-    @Autowired
-    private AdminCollectionLinkCreator adminCollectionLinkCreator;
-    @Autowired
-    private CommonCollectionLinkCreator commonCollectionLinkCreator;
-    @Autowired
-    private JwtProperty jwtProperty;
-    @Autowired
-    ObjectMapper mapper;
+    private JwtGrantedAuthoritiesConverter customConverter;
 
-    private Cookie userJwtCookie;
-    private Cookie adminJwtCookie;
+    private Jwt userJwt;
+    private Jwt adminJwt;
 
     @BeforeEach
-    void beforeAll() {
-        String userJwtCookieValue = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxQGdtYWlsLmNvbSIsInVzZXJJZCI6MSwicm9sZSI6IlJPTEVfV"
-                + "VNFUiJ9.EddlZP2UHYF9kmHURWj-aM9A-Z8e-UMNgle33R_wtH8GKjq7foxvWnWUuIwRuBqwVHEOo1ijVRb-OJDMqTmiTw";
-        userJwtCookie = new Cookie(jwtProperty.getCookieName(), userJwtCookieValue);
-
-        String adminJwtCookieValue = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBnbWFpbC5jb20iLCJ1c2VySWQiOjEwMDUsIn"
-                + "JvbGUiOiJST0xFX0FETUlOIn0.UAtp-jJQnaAcIji32vtvPssWHSLUFzazIxjf03C_fOgks_i5OPXfaED1naa3zFEVTI"
-                + "haAhu9dZ6GBDrh55EyqA";
-        adminJwtCookie = new Cookie(jwtProperty.getCookieName(), adminJwtCookieValue);
+    void setUp() {
+        userJwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("scope", "all")
+                .claim("user_id", Long.valueOf(1L))
+                .claim("user_name", "1@gmail.com")
+                .claim("authorities", "ROLE_USER")
+                .build();
+        adminJwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("scope", "all")
+                .claim("user_id", Long.valueOf(1001L))
+                .claim("user_name", "admin@gmail.com")
+                .claim("authorities", "ROLE_ADMIN")
+                .build();
     }
 
     @Test
-    void findCertificate_guestWithoutJwtCookieAndExistentCertificateId_ok() throws Exception {
+    void findCertificate_guestWithoutJwtAndExistentCertificateId_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(1L);
         dto.setName("name");
@@ -116,7 +108,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findCertificate_userJwtCookieAndExistentCertificateId_ok() throws Exception {
+    void findCertificate_userJwtAndExistentCertificateId_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(1L);
         dto.setName("name");
@@ -132,7 +124,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findById(Mockito.anyLong())).thenReturn(dto);
 
         mockMvc.perform(get("/certificates/1")
-                        .cookie(userJwtCookie))
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
@@ -152,7 +144,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findCertificate_adminJwtCookieAndExistentCertificateId_ok() throws Exception {
+    void findCertificate_adminJwtAndExistentCertificateId_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(1L);
         dto.setName("name");
@@ -168,7 +160,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findById(Mockito.anyLong())).thenReturn(dto);
 
         mockMvc.perform(get("/certificates/1")
-                        .cookie(adminJwtCookie))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
@@ -219,7 +211,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificates_guestWithoutJwtCookieAndCorrectPaginationParameters_ok() throws Exception {
+    void findAllCertificates_guestWithoutJwtAndCorrectPaginationParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -245,7 +237,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificates_userJwtCookieAndCorrectPaginationParameters_ok() throws Exception {
+    void findAllCertificates_userJwtAndCorrectPaginationParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -255,7 +247,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findAllLastPage(Mockito.anyInt())).thenReturn(100);
 
         mockMvc.perform(get("/certificates?page=2&size=3")
-                        .cookie(userJwtCookie))
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.certificates", hasSize(2)))
@@ -272,7 +264,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificates_adminJwtCookieAndCorrectPaginationParameters_ok() throws Exception {
+    void findAllCertificates_adminJwtAndCorrectPaginationParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -282,7 +274,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findAllLastPage(Mockito.anyInt())).thenReturn(100);
 
         mockMvc.perform(get("/certificates?page=2&size=3")
-                        .cookie(adminJwtCookie))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.certificates", hasSize(2)))
@@ -314,7 +306,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificate_guestWithoutJwtCookie_unauthorized() throws Exception {
+    void deleteCertificate_guestWithoutJwt_unauthorized() throws Exception {
         mockMvc.perform(delete("/certificates/1")
                         .with(csrf()))
                 .andDo(print())
@@ -322,21 +314,19 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificate_userJwtCookie_forbidden() throws Exception {
+    void deleteCertificate_userJwt_forbidden() throws Exception {
         mockMvc.perform(delete("/certificates/1")
-                        .cookie(userJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void deleteCertificate_adminJwtCookieAndExistentCertificateId_noContent() throws Exception {
+    void deleteCertificate_adminJwtAndExistentCertificateId_noContent() throws Exception {
         Mockito.doNothing().when(serviceMock).delete(Mockito.anyLong());
 
         mockMvc.perform(delete("/certificates/1")
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
@@ -344,13 +334,12 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificate_adminJwtCookieAndNotValidCertificateId_bagRequest() throws Exception {
+    void deleteCertificate_adminJwtAndNotValidCertificateId_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.doThrow(ex).when(serviceMock).delete(Mockito.anyLong());
 
         mockMvc.perform(delete("/certificates/-1")
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorMessage").value("Not valid data: error"))
@@ -360,13 +349,12 @@ class CertificateControllerTest {
     }
 
     @Test
-    void deleteCertificate_adminJwtCookieAndNonExistentCertificateId_notFound() throws Exception {
+    void deleteCertificate_adminJwtAndNonExistentCertificateId_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.doThrow(ex).when(serviceMock).delete(Mockito.anyLong());
 
         mockMvc.perform(delete("/certificates/999")
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorMessage").value("Resource not found: error"))
@@ -376,24 +364,31 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificate_guestWithoutJwtCookie_unauthorized() throws Exception {
+    void createCertificate_guestWithoutJwt_unauthorized() throws Exception {
+        String jsonContent = mapper.writeValueAsString(new CertificateDto());
+
         mockMvc.perform(post("/certificates")
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void createCertificate_adminJwtCookieAndCorrectCertificateData_forbidden() throws Exception {
+    void createCertificate_userJwtAndCorrectCertificateData_forbidden() throws Exception {
+        String jsonContent = mapper.writeValueAsString(new CertificateDto());
+
         mockMvc.perform(post("/certificates")
-                        .cookie(userJwtCookie)
-                        .with(csrf()))
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void createCertificate_adminJwtCookieAndCorrectCertificateData_ok() throws Exception {
+    void createCertificate_adminJwtAndCorrectCertificateData_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(55L);
         dto.setTags(new HashSet<>());
@@ -405,8 +400,7 @@ class CertificateControllerTest {
         mockMvc.perform(post("/certificates")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(55L))
@@ -422,7 +416,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificate_adminJwtCookieAndNotValidData_bagRequest() throws Exception {
+    void createCertificate_adminJwtAndNotValidData_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -431,8 +425,7 @@ class CertificateControllerTest {
         mockMvc.perform(post("/certificates")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorMessage").value("Not valid data: error"))
@@ -442,7 +435,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void createCertificate_adminJwtCookieAnExistentCertificateData_conflict() throws Exception {
+    void createCertificate_adminJwtAnExistentCertificateData_conflict() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_ALREADY_EXIST);
         Mockito.when(serviceMock.create(Mockito.any())).thenThrow(ex);
 
@@ -451,8 +444,7 @@ class CertificateControllerTest {
         mockMvc.perform(post("/certificates")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorMessage").value("Resource already exist: error"))
@@ -462,24 +454,31 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateGiftCertificate_guestWithoutJwtCookie_unauthorized() throws Exception {
-                mockMvc.perform(patch("/certificates/55")
+    void updateGiftCertificate_guestWithoutJwt_unauthorized() throws Exception {
+        String jsonContent = mapper.writeValueAsString(new CertificateDto());
+
+        mockMvc.perform(patch("/certificates/55")
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void updateGiftCertificate_userJwtCookie_forbidden() throws Exception {
+    void updateGiftCertificate_userJwt_forbidden() throws Exception {
+        String jsonContent = mapper.writeValueAsString(new CertificateDto());
+
         mockMvc.perform(patch("/certificates/55")
-                        .cookie(userJwtCookie)
-                        .with(csrf()))
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void updateGiftCertificate_adminJwtCookieAndCorrectCertificateData_ok() throws Exception {
+    void updateGiftCertificate_adminJwtAndCorrectCertificateData_ok() throws Exception {
         CertificateDto dto = new CertificateDto();
         dto.setId(55L);
         dto.setTags(new HashSet<>());
@@ -491,8 +490,7 @@ class CertificateControllerTest {
         mockMvc.perform(patch("/certificates/55")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(55L))
@@ -508,7 +506,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateCertificate_adminJwtCookieAndNotValidCertificateData_bagRequest() throws Exception {
+    void updateCertificate_adminJwtAndNotValidCertificateData_bagRequest() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.NOT_VALID_DATA);
         Mockito.when(serviceMock.update(Mockito.anyLong(), Mockito.any())).thenThrow(ex);
 
@@ -517,8 +515,7 @@ class CertificateControllerTest {
         mockMvc.perform(patch("/certificates/1")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorMessage").value("Not valid data: error"))
@@ -528,7 +525,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void updateCertificate_adminJwtCookieAndNonExistentCertificateId_notFound() throws Exception {
+    void updateCertificate_adminJwtAndNonExistentCertificateId_notFound() throws Exception {
         CustomException ex = new CustomException("error", CustomErrorCode.RESOURCE_NOT_FOUND);
         Mockito.doThrow(ex).when(serviceMock).update(Mockito.anyLong(), Mockito.any());
 
@@ -537,8 +534,7 @@ class CertificateControllerTest {
         mockMvc.perform(patch("/certificates/999")
                         .content(jsonContent)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .cookie(adminJwtCookie)
-                        .with(csrf()))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorMessage").value("Resource not found: error"))
@@ -549,7 +545,7 @@ class CertificateControllerTest {
 
 
     @Test
-    void findAllCertificatesByParameters_guestWithoutJwtCookieAdnCorrectSearchParameters_ok() throws Exception {
+    void findAllCertificatesByParameters_guestWithoutJwtAdnCorrectSearchParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -578,7 +574,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificatesByParameters_userJwtCookieAdnCorrectSearchParameters_ok() throws Exception {
+    void findAllCertificatesByParameters_userJwtAdnCorrectSearchParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -589,7 +585,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findAllByParametersLastPage(Mockito.anyMap(), Mockito.anyInt())).thenReturn(100);
 
         mockMvc.perform(get("/certificates/search?page=2&size=3&tag=tag_1&sorting=name.asc")
-                        .cookie(userJwtCookie))
+                        .with(jwt().jwt(userJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.certificates", hasSize(2)))
@@ -608,7 +604,7 @@ class CertificateControllerTest {
     }
 
     @Test
-    void findAllCertificatesByParameters_adminJwtCookieAdnCorrectSearchParameters_ok() throws Exception {
+    void findAllCertificatesByParameters_adminJwtAdnCorrectSearchParameters_ok() throws Exception {
         CertificateDto dto1 = new CertificateDto();
         dto1.setId(1L);
         CertificateDto dto2 = new CertificateDto();
@@ -619,7 +615,7 @@ class CertificateControllerTest {
         Mockito.when(serviceMock.findAllByParametersLastPage(Mockito.anyMap(), Mockito.anyInt())).thenReturn(100);
 
         mockMvc.perform(get("/certificates/search?page=2&size=3&tag=tag_1&sorting=name.asc")
-                        .cookie(adminJwtCookie))
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.certificates", hasSize(2)))

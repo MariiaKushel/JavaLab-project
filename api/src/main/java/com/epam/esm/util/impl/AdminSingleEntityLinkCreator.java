@@ -1,8 +1,8 @@
 package com.epam.esm.util.impl;
 
-import com.epam.esm.controller.AdminController;
 import com.epam.esm.controller.CertificateController;
 import com.epam.esm.controller.TagController;
+import com.epam.esm.controller.UserController;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
@@ -33,18 +33,18 @@ public class AdminSingleEntityLinkCreator extends SingleEntityLinkCreator {
 
     @Override
     public List<Link> createLinks(UserDto user) throws CustomException {
-        Link selfLink = linkTo(methodOn(AdminController.class).findAdmin("")).withSelfRel();
-        Link ordersLink = linkTo(methodOn(AdminController.class).findOrdersByUser(1L, 1, 10))
+        Link selfLink = linkTo(methodOn(UserController.class).findUser(null)).withSelfRel();
+        Link ordersLink = linkTo(methodOn(UserController.class).findOrdersByUser(1L, 1, 10))
                 .withRel(ORDERS);
         return List.of(selfLink, ordersLink);
     }
 
     @Override
     public List<Link> createLinks(OrderDto order, Long userId) throws CustomException {
-        Link selfLink = linkTo(methodOn(AdminController.class).findOrderByUser(userId, order.getId())).withSelfRel();
-        Link ordersLink = linkTo(methodOn(AdminController.class).findOrdersByUser(userId, 1, 10))
+        Link selfLink = linkTo(methodOn(UserController.class).findOrderByUser(userId, order.getId())).withSelfRel();
+        Link ordersLink = linkTo(methodOn(UserController.class).findOrdersByUser(userId, 1, 10))
                 .withRel(ORDERS);
-        Link adminLink = linkTo(methodOn(AdminController.class).findAdmin("")).withRel(ADMIN);
+        Link adminLink = linkTo(methodOn(UserController.class).findUser(null)).withRel(USER);
         return List.of(selfLink, ordersLink, adminLink);
     }
 
