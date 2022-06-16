@@ -8,6 +8,11 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -45,7 +50,7 @@ public class CustomExceptionAdvice {
     }
 
     /**
-     * Method catches CustomException and generates response entity.
+     * Method catches Exception and generates response entity.
      *
      * @param e - Exception
      * @return - response entity consist body - ExceptionResponse and HttpStatus
@@ -55,8 +60,7 @@ public class CustomExceptionAdvice {
         int errorCode = CustomErrorCode.INTERNAL_SERVER_EXCEPTION.getCode();
         String message = messageSource.getMessage(String.valueOf(errorCode),
                 null, LocaleContextHolder.getLocale())
-                + e.getMessage()
-                + e.getCause();
+                + e.getMessage();
         HttpStatus httpStatus = CustomErrorCode.INTERNAL_SERVER_EXCEPTION.getHttpStatus();
         ExceptionResponse exceptionResponse = new ExceptionResponse(message, errorCode);
         return new ResponseEntity<>(exceptionResponse, httpStatus);
@@ -143,6 +147,27 @@ public class CustomExceptionAdvice {
         String message = messageSource.getMessage(String.valueOf(errorCode),
                 null, LocaleContextHolder.getLocale()) + e.getParameterName() + ".";
         HttpStatus httpStatus = CustomErrorCode.MISSING_PARAMETER.getHttpStatus();
+        ExceptionResponse exceptionResponse = new ExceptionResponse(message, errorCode);
+        return new ResponseEntity<>(exceptionResponse, httpStatus);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionResponse> handleAccessDeniedException(
+            AccessDeniedException e) {
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = context.getAuthentication();
+        int errorCode;
+        HttpStatus httpStatus;
+        try {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            errorCode = CustomErrorCode.FORBIDDEN_RESOURCE.getCode();
+            httpStatus = CustomErrorCode.FORBIDDEN_RESOURCE.getHttpStatus();
+        } catch (ClassCastException ex) {
+            errorCode = CustomErrorCode.NEED_AUTH_OR_NOT_POSSIBLE.getCode();
+            httpStatus = CustomErrorCode.NEED_AUTH_OR_NOT_POSSIBLE.getHttpStatus();
+        }
+        String message = messageSource.getMessage(String.valueOf(errorCode),
+                null, LocaleContextHolder.getLocale());
         ExceptionResponse exceptionResponse = new ExceptionResponse(message, errorCode);
         return new ResponseEntity<>(exceptionResponse, httpStatus);
     }

@@ -1,37 +1,41 @@
 package com.epam.esm.dao;
 
 import com.epam.esm.dao.entity.Order;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Interface add BaseDao for work with Order entity
+ * Interface for database operation with Order entity
  */
-public interface OrderDao extends BaseDao<Order, Long> {
+public interface OrderDao extends PagingAndSortingRepository<Order, Long> {
 
     /**
      * Find Orders by User id with pagination
      *
-     * @param page page
-     * @param size page size
+     * @param userId User id
+     * @param paging pagination parameters
      * @return list of Orders or empty list if no one Order was not found
      */
-    List<Order> findByUser(Long userId, int page, int size);
-
-    /**
-     * Find Order by id and User id
-     *
-     * @param orderId Order id
-     * @param userId  User id
-     * @return Optional representation of Order or empty Optional, if Order was not found
-     */
-    Optional<Order> findByIdAndByUser(Long orderId, Long userId);
+    List<Order> findAllByUserId(Long userId, Pageable paging);
 
     /**
      * Count all Orders by User id
      *
-     * @return quantity of all Orders by User id
+     * @param userId User id
+     * @return Orders quantity
      */
-    long countByUser(Long userId);
+    int countByUserId(Long userId);
+
+    /**
+     * Find Order by id and User id
+     *
+     * @param id     Order id
+     * @param userId User id
+     * @return Optional representation of Order or empty Optional, if Order was not found
+     */
+    Optional<Order> findByIdAndUserId(Long id, Long userId);
+
 }

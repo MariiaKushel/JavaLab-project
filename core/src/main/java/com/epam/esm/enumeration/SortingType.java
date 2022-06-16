@@ -1,4 +1,4 @@
-package com.epam.esm.service;
+package com.epam.esm.enumeration;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -13,7 +13,7 @@ public enum SortingType {
     DATE_DESC("date.desc"),
     DATE_DESC_NAME_ASC("date.desc,name.asc");
 
-    private String type;
+    private final String type;
 
     SortingType(String type) {
         this.type = type;

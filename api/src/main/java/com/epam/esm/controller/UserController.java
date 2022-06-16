@@ -1,17 +1,24 @@
 package com.epam.esm.controller;
 
+import com.epam.esm.enumeration.UserRole;
 import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.service.UserService;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
 import com.epam.esm.service.dto.UserDto;
-import com.epam.esm.util.LinkCreator;
+import com.epam.esm.util.impl.AdminCollectionLinkCreator;
+import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
+import com.epam.esm.util.impl.UserCollectionLinkCreator;
+import com.epam.esm.util.impl.UserSingleEntityLinkCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,78 +37,147 @@ import java.util.List;
 @RequestMapping(value = "/users")
 public class UserController {
 
+    private static final String USER_ID_CLAIM_KEY = "user_id";
+    private static final String ROLE_CLAIM_KEY = "authorities";
+
     private UserService userService;
     private OrderService orderService;
+    private UserSingleEntityLinkCreator userSingleEntityLinkCreator;
+    private UserCollectionLinkCreator userCollectionLinkCreator;
+    private AdminSingleEntityLinkCreator adminSingleEntityLinkCreator;
+    private AdminCollectionLinkCreator adminCollectionLinkCreator;
 
     @Autowired
-    public UserController(UserService userService, OrderService orderService) {
+    public UserController(UserService userService, OrderService orderService,
+                          UserSingleEntityLinkCreator userSingleEntityLinkCreator,
+                          UserCollectionLinkCreator userCollectionLinkCreator,
+                          AdminSingleEntityLinkCreator adminSingleEntityLinkCreator,
+                          AdminCollectionLinkCreator adminCollectionLinkCreator) {
         this.userService = userService;
         this.orderService = orderService;
+        this.userSingleEntityLinkCreator = userSingleEntityLinkCreator;
+        this.userCollectionLinkCreator = userCollectionLinkCreator;
+        this.adminSingleEntityLinkCreator = adminSingleEntityLinkCreator;
+        this.adminCollectionLinkCreator = adminCollectionLinkCreator;
     }
 
     /**
-     * Method to get User as UserDto by id
+     * Method to get current User as UserDto by access token
      *
-     * @param id User id
+     * @param jwt access token
      * @return User as UserDto
      * @throws CustomException - if User was not found or id has not valid value;
      */
-    @GetMapping(value = "/{id}")
-    public UserDto findUser(@PathVariable("id") long id) throws CustomException {
-        UserDto user = userService.findById(id);
-        List<Link> links = LinkCreator.createSingleEntityLinks(user);
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping(value = "/me")
+    public UserDto findUser(@AuthenticationPrincipal Jwt jwt) throws CustomException {
+        Long userId = jwt.getClaim(USER_ID_CLAIM_KEY);
+        UserDto user = userService.findById(userId);
+        String role = jwt.getClaim(ROLE_CLAIM_KEY);
+        List<Link> links = role.equals(UserRole.ROLE_USER.name())
+                ? userSingleEntityLinkCreator.createLinks(user)
+                : adminSingleEntityLinkCreator.createLinks(user);
         return user.add(links);
     }
 
     /**
-     * Method to get pagination Orders list by User as OrderDto list
+     * Method to get pagination Orders list by current User as OrderDto list
      *
-     * @param id   User id
+     * @param jwt  access token
      * @param page page
      * @param size page size
      * @return CollectionModel consist of list of OrderDto or empty list if was not found anyone Order
      * and links to previous and nex pages.
      * @throws CustomException - if id or page or size has not valid value;
      */
-    @GetMapping(value = "/{id}/orders")
-    public CollectionModel<OrderDto> findOrders(@PathVariable("id") long id,
-                                                @RequestParam(name = "page", defaultValue = "1", required = false) int page,
-                                                @RequestParam(name = "size", defaultValue = "10", required = false) int size)
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/me/orders")
+    public CollectionModel<OrderDto> findOrdersByCurrentUser(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size)
             throws CustomException {
-        List<OrderDto> orders = orderService.findAllByUser(id, page, size);
-        List<Link> links = LinkCreator.createPaginationListEntityLinks(orders, id, page, size);
+        Long userId = jwt.getClaim(USER_ID_CLAIM_KEY);
+        List<OrderDto> orders = orderService.findAllByUser(userId, page, size);
+        int lastPage = orderService.findAllByUserLastPage(userId, size);
+        List<Link> links = userCollectionLinkCreator.createLinks(orders, userId, page, size, lastPage);
         return CollectionModel.of(orders, links);
     }
 
     /**
-     * Method to get Order as OrderDto by User
+     * Method to get pagination Orders list by User id as OrderDto list
      *
-     * @param id      User id
+     * @param userId user id
+     * @param page   page
+     * @param size   page size
+     * @return CollectionModel consist of list of OrderDto or empty list if was not found anyone Order
+     * and links to previous and nex pages.
+     * @throws CustomException - if id or page or size has not valid value;
+     */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/{userId}/orders")
+    public CollectionModel<OrderDto> findOrdersByUser(
+            @PathVariable("userId") Long userId,
+            @RequestParam(name = "page", defaultValue = "1", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size)
+            throws CustomException {
+        List<OrderDto> orders = orderService.findAllByUser(userId, page, size);
+        int lastPage = orderService.findAllByUserLastPage(userId, size);
+        List<Link> links = adminCollectionLinkCreator.createLinks(orders, userId, page, size, lastPage);
+        return CollectionModel.of(orders, links);
+    }
+
+    /**
+     * Method to get Order as OrderDto by current User
+     *
+     * @param jwt     access token
      * @param orderId Order id
      * @return Order as OrderDto
      * @throws CustomException - if Order was not found or id or orderId has not valid value;
      */
-    @GetMapping(value = "/{id}/orders/{orderId}")
-    public OrderDto findOrder(@PathVariable("id") long id, @PathVariable("orderId") long orderId) throws CustomException {
-        OrderDto order = orderService.findByIdAndByUser(orderId, id);
-        List<Link> links = LinkCreator.createSingleEntityLinks(order, id);
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/me/orders/{orderId}")
+    public OrderDto findOrderByCurrentUser(@AuthenticationPrincipal Jwt jwt,
+                                           @PathVariable("orderId") long orderId) throws CustomException {
+        Long userId = jwt.getClaim(USER_ID_CLAIM_KEY);
+        OrderDto order = orderService.findByIdAndByUser(orderId, userId);
+        List<Link> links = userSingleEntityLinkCreator.createLinks(order, userId);
         return order.add(links);
     }
 
     /**
-     * Method to create new Order by User
+     * Method to get Order as OrderDto by User id
      *
-     * @param id           User id
+     * @param userId  user id
+     * @param orderId Order id
+     * @return Order as OrderDto
+     * @throws CustomException - if Order was not found or id or orderId has not valid value;
+     */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/{userId}/orders/{orderId}")
+    public OrderDto findOrderByUser(@PathVariable("userId") Long userId,
+                                    @PathVariable("orderId") long orderId) throws CustomException {
+        OrderDto order = orderService.findByIdAndByUser(orderId, userId);
+        List<Link> links = adminSingleEntityLinkCreator.createLinks(order, userId);
+        return order.add(links);
+    }
+
+    /**
+     * Method to create new Order by current User
+     *
+     * @param jwt          access token
      * @param certificates certificate list
      * @return new Order as OrderDto
      * @throws CustomException - if certificate list or id has not valid value;
      */
-    @PostMapping(value = "/{id}/orders/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PostMapping(value = "/me/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderDto createOrder(@PathVariable("id") long id,
+    public OrderDto createOrder(@AuthenticationPrincipal Jwt jwt,
                                 @RequestBody List<CertificateDto> certificates) throws CustomException {
-        OrderDto order = orderService.create(id, certificates);
-        List<Link> links = LinkCreator.createSingleEntityLinks(order, id);
+        Long userId = jwt.getClaim(USER_ID_CLAIM_KEY);
+        OrderDto order = orderService.create(userId, certificates);
+        List<Link> links = userSingleEntityLinkCreator.createLinks(order, userId);
         return order.add(links);
     }
 }

@@ -3,6 +3,7 @@ package com.epam.esm.dao.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.springframework.data.domain.Persistable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -28,7 +29,7 @@ import java.util.Set;
 @ToString(callSuper = true, exclude = {"tags", "orders"})
 @Entity
 @Table(name = "gift_certificates")
-public class GiftCertificate extends BaseEntity {
+public class GiftCertificate extends BaseEntity implements Persistable<Long> {
 
     @Column(name = "name")
     private String name;
@@ -42,6 +43,8 @@ public class GiftCertificate extends BaseEntity {
     private LocalDateTime createDate;
     @Column(name = "last_update_date")
     private LocalDateTime lastUpdateDate;
+    @Column(name = "active")
+    private boolean active;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -67,8 +70,7 @@ public class GiftCertificate extends BaseEntity {
 
     @PreUpdate
     public void preUpdate() {
-        LocalDateTime now = LocalDateTime.now();
-        lastUpdateDate = now;
+        lastUpdateDate = LocalDateTime.now();
     }
 
     @PreRemove
@@ -78,4 +80,9 @@ public class GiftCertificate extends BaseEntity {
         }
     }
 
+    @Override
+    public boolean isNew() {
+        return null == this.getId() &&
+                this.getTags().stream().allMatch(t -> null==t.getId());
+    }
 }

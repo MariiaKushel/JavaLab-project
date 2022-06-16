@@ -6,6 +6,7 @@ import com.epam.esm.dao.entity.Order;
 import com.epam.esm.dao.entity.User;
 import com.epam.esm.service.dto.CertificateDto;
 import com.epam.esm.service.dto.OrderDto;
+import com.epam.esm.service.dto.RegistrationFormDto;
 import com.epam.esm.service.dto.TagDto;
 import com.epam.esm.service.dto.UserDto;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Util class helps to convert GiftCertificate to GiftCertificateDto and vice versa
+ * Util class helps to convert entity to dto and vice versa
  */
 public class DtoEntityConvector {
 
@@ -141,8 +142,9 @@ public class DtoEntityConvector {
     public static UserDto convert(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
-        dto.setLogin(user.getLogin());
+        dto.setUsername(user.getLogin());
         dto.setName(user.getName());
+        dto.setRole(user.getRole());
         return dto;
     }
 
@@ -170,6 +172,20 @@ public class DtoEntityConvector {
         return orders.stream()
                 .map(DtoEntityConvector::convert)
                 .toList();
+    }
+
+    /**
+     * Convert RegistrationFormDto to User
+     *
+     * @param dto RegistrationFormDto
+     * @return User
+     */
+    public static User convert(RegistrationFormDto dto) {
+        User user = new User();
+        user.setLogin(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setName(dto.getName());
+        return user;
     }
 
 }
