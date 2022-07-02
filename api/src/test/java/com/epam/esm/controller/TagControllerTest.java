@@ -7,6 +7,7 @@ import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.dto.TagDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.shaded.json.JSONArray;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -56,14 +57,14 @@ class TagControllerTest {
                 .claim("scope", "all")
                 .claim("user_id", Long.valueOf(1L))
                 .claim("user_name", "1@gmail.com")
-                .claim("authorities", "ROLE_USER")
+                .claim("authorities", new JSONArray().appendElement("ROLE_USER"))
                 .build();
         adminJwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .claim("scope", "all")
                 .claim("user_id", Long.valueOf(1001L))
                 .claim("user_name", "admin@gmail.com")
-                .claim("authorities", "ROLE_ADMIN")
+                .claim("authorities", new JSONArray().appendElement("ROLE_ADMIN"))
                 .build();
     }
 
