@@ -171,7 +171,7 @@ class GiftCertificateDaoTest {
         String[] tagsNames2 = {"tag_998", "tag_999", "tag_1000"};
         String[] tagsNames3 = {"tag_5", "tag_1000"};
         return new Object[][]{
-                {tagsNames1, true, 10},
+                {tagsNames1, true, 20},
                 {tagsNames1, false, 0},
                 {tagsNames2, true, 10},
                 {tagsNames3, true, 0}

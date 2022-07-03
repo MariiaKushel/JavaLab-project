@@ -23,7 +23,7 @@ class OrderDaoTest {
     public static Object[][] findAllByUserIdDataProvider() {
         Pageable paging = PageRequest.of(0, 10);
         return new Object[][]{
-                {1L, 5, paging},
+                {1L, 9, paging},
                 {99999999L, 0, paging}
         };
     }
@@ -39,7 +39,7 @@ class OrderDaoTest {
 
     public static Object[][] countByUserIdDataProvider() {
         return new Object[][]{
-                {1L, 5},
+                {1L, 9},
                 {99999999L, 0}
         };
     }
@@ -53,7 +53,7 @@ class OrderDaoTest {
 
     public static Object[][] findByIdAndByUserIdDataProvider() {
         return new Object[][]{
-                {318L, 1L, true},
+                {159L, 1L, true},
                 {1L, 1L, false}
         };
     }

@@ -35,7 +35,7 @@ class CustomTagDaoTest {
 
     @Test
     void findTheMostWidelyTag() {
-        CustomTag expected = new CustomTag(236L, "tag_236");
+        CustomTag expected = new CustomTag(975L, "tag_975");
         CustomTag actual = dao.findTheMostWidelyTag();
         Assertions.assertNotNull(actual);
         Assertions.assertEquals(expected, actual);
