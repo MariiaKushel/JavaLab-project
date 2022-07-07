@@ -59,5 +59,14 @@ jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "com/epam/esm/dao/entity",
+                    "com/epam/esm/service/dto",
+                    "com/epam/esm/CoreConfig.java"
+            ])
+        }))
+    }
 }
 
