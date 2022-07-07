@@ -35,5 +35,5 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    exclude 'com/bepam/esm'
+    exclude 'com/epam/esm'
 }
