@@ -38,6 +38,7 @@ test {
     useJUnitPlatform()
 }
 
-war {
+bootWar{
     enabled=true
+    archiveName 'authorization-server.war'
 }

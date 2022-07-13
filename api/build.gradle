@@ -55,6 +55,7 @@ jacocoTestReport {
     }
 }
 
-war {
+bootWar{
     enabled=true
+    archiveName 'resource-server.war'
 }
