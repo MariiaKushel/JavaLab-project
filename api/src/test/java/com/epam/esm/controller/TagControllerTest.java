@@ -397,7 +397,7 @@ class TagControllerTest {
     }
 
     @Test
-    void createTag_wrongJsonFormat_badRequest() throws Exception {
+    void createTag_notReadableJson_badRequest() throws Exception {
         mockMvc.perform(post("/tags")
                         .content("wrongContentFormat")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -406,6 +406,18 @@ class TagControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorMessage").value("Can not read object from JSON."))
                 .andExpect(jsonPath("$.errorCode").value(40003));
+    }
+
+    @Test
+    void createTag_wrongRequestBodyFormat_unsupportedMediaType() throws Exception {
+        mockMvc.perform(post("/tags")
+                        .content("wrongContentFormat")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
+                .andDo(print())
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.errorMessage").value("Media type is unsupported."))
+                .andExpect(jsonPath("$.errorCode").value(41501));
     }
 
     @Test
