@@ -152,6 +152,15 @@ class TagControllerTest {
     }
 
     @Test
+    void findTag_idTypeMismatch_badRequest() throws Exception {
+        mockMvc.perform(get("/tags/abc"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorMessage").value("Can not convert argument to expected type."))
+                .andExpect(jsonPath("$.errorCode").value(40002));
+    }
+
+    @Test
     void findAllTag_guestWithoutJwtAndCorrectPaginationParameters_ok() throws Exception {
         TagDto tag1 = new TagDto(1L, "tag1");
         TagDto tag2 = new TagDto(2L, "tag2");
@@ -388,6 +397,18 @@ class TagControllerTest {
     }
 
     @Test
+    void createTag_wrongJsonFormat_badRequest() throws Exception {
+        mockMvc.perform(post("/tags")
+                        .content("wrongContentFormat")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorMessage").value("Can not read object from JSON."))
+                .andExpect(jsonPath("$.errorCode").value(40003));
+    }
+
+    @Test
     void findTheMostWidelyTag_guestWithoutJwt_ok() throws Exception {
         TagDto tag = new TagDto(1L, "tag");
         Mockito.when(serviceMock.findTheMostWidelyTag()).thenReturn(tag);
@@ -440,5 +461,15 @@ class TagControllerTest {
                 .andExpect(jsonPath("$._links.create.href", notNullValue()));
 
         Mockito.verify(serviceMock, Mockito.times(1)).findTheMostWidelyTag();
+    }
+
+    @Test
+    void findTheMostWidelyTag_wrongHttpMethod_methodNotSupported() throws Exception {
+        mockMvc.perform(post("/tags/the-most-widely")
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.errorMessage").value("Request method not supported: POST."))
+                .andExpect(jsonPath("$.errorCode").value(40501));
     }
 }
