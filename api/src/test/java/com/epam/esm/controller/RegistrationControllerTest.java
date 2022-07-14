@@ -198,4 +198,19 @@ class RegistrationControllerTest {
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void createUser_guestWithoutCsrf_forbidden() throws Exception {
+        RegistrationFormDto form = new RegistrationFormDto();
+        form.setUsername("42@gmail.com");
+        form.setName("Petr");
+        form.setPassword("secret");
+
+        String jsonContent = mapper.writeValueAsString(form);
+        mockMvc.perform(post("/registration")
+                        .content(jsonContent)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
 }
