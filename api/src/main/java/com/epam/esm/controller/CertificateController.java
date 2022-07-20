@@ -9,6 +9,7 @@ import com.epam.esm.util.impl.AdminCollectionLinkCreator;
 import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
 import com.epam.esm.util.impl.CommonCollectionLinkCreator;
 import com.epam.esm.util.impl.CommonSingleEntityLinkCreator;
+import com.nimbusds.jose.shaded.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -73,7 +74,7 @@ public class CertificateController {
     public CertificateDto findCertificate(@AuthenticationPrincipal Jwt jwt,
                                           @PathVariable("id") long id) throws CustomException {
         CertificateDto certificate = service.findById(id);
-        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        List<Link> links = (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminSingleEntityLinkCreator.createLinks(certificate)
                 : commonSingleEntityLinkCreator.createLinks(certificate);
         return certificate.add(links);
@@ -97,7 +98,7 @@ public class CertificateController {
             throws CustomException {
         List<CertificateDto> certificates = service.findAll(page, size);
         int lastPage = service.findAllLastPage(size);
-        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        List<Link> links = (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, page, size, lastPage);
         return CollectionModel.of(certificates, links);
@@ -182,7 +183,7 @@ public class CertificateController {
         Map<SearchParameterName, String> parameters = collectParamToMap(tag, name, description, sortBy);
         List<CertificateDto> certificates = service.findAllByParameters(parameters, page, size);
         int lastPage = service.findAllByParametersLastPage(parameters, size);
-        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        List<Link> links = (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
                 sortBy, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tag, name, description,
@@ -208,7 +209,7 @@ public class CertificateController {
             throws CustomException {
         List<CertificateDto> certificates = service.findAllByTags(tags, page, size);
         int lastPage = service.findAllByTagsLastPage(tags, size);
-        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        List<Link> links = (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinksCertificates(certificates, tags, page, size, lastPage);
         return CollectionModel.of(certificates, links);

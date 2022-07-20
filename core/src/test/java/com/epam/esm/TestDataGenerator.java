@@ -1,6 +1,5 @@
 package com.epam.esm;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.IOException;
@@ -40,7 +39,7 @@ class TestDataGenerator {
     private static final String COMMA = "', '";
     private static final String COMMA_BRACKET = "');";
 
-    @Test
+    //@Test 
     public void generateData() throws IOException {
         generateTags(PATH_TO_DATA);
         generateGiftCertificates(PATH_TO_DATA, StandardOpenOption.APPEND);

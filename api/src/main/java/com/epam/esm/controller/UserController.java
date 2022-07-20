@@ -73,8 +73,7 @@ public class UserController {
     public UserDto findUser(@AuthenticationPrincipal Jwt jwt) throws CustomException {
         Long userId = jwt.getClaim(USER_ID_CLAIM_KEY);
         UserDto user = userService.findById(userId);
-        String role = jwt.getClaim(ROLE_CLAIM_KEY);
-        List<Link> links = role.equals(UserRole.ROLE_USER.name())
+        List<Link> links = user.getRole()==UserRole.ROLE_USER
                 ? userSingleEntityLinkCreator.createLinks(user)
                 : adminSingleEntityLinkCreator.createLinks(user);
         return user.add(links);

@@ -1,10 +1,11 @@
-module-4
+module-6
  
 Task description    
-https://github.com/mjc-school/MJC-School/blob/main/stage%20%233/java/module%20%234.%20Authentication%20%26%20Spring%20Security/authentication_and_spring_security_task.md  
-
+https://github.com/mjc-school/MJC-School/blob/old/stage%20%233/java/module%20%236.%20CI-CD/ci_cd_task.md (old branch)  
+  
 All tasks here  
 module 1 - branch 'module_1' includes 2 subtasks: branch 'util' and branch 'multi_project_gradle'  
 module 2 - branch 'module_2'  
 module 3 - branch 'module_3'  
 module 4 - branch 'module_4'  
+module 5 - only theory  

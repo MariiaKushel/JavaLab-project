@@ -8,6 +8,7 @@ import com.epam.esm.util.impl.AdminCollectionLinkCreator;
 import com.epam.esm.util.impl.AdminSingleEntityLinkCreator;
 import com.epam.esm.util.impl.CommonCollectionLinkCreator;
 import com.epam.esm.util.impl.CommonSingleEntityLinkCreator;
+import com.nimbusds.jose.shaded.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
@@ -91,7 +92,7 @@ public class TagController {
             throws CustomException {
         List<TagDto> tags = service.findAll(page, size);
         int lastPage = service.findAllLastPage(size);
-        List<Link> links = (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        List<Link> links = (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminCollectionLinkCreator.createLinks(tags, page, size, lastPage)
                 : commonCollectionLinkCreator.createLinks(tags, page, size, lastPage);
         return CollectionModel.of(tags, links);
@@ -143,7 +144,7 @@ public class TagController {
     }
 
     private List<Link> getSingleEntityLinksByRole(Jwt jwt, TagDto tag) throws CustomException {
-        return (jwt != null && jwt.getClaim(ROLE_CLAIM_KEY).equals(UserRole.ROLE_ADMIN.name()))
+        return (jwt != null && ((JSONArray)jwt.getClaim(ROLE_CLAIM_KEY)).get(0).equals(UserRole.ROLE_ADMIN.name()))
                 ? adminSingleEntityLinkCreator.createLinks(tag)
                 : commonSingleEntityLinkCreator.createLinks(tag);
     }

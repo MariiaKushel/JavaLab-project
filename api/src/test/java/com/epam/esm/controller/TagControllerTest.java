@@ -7,6 +7,7 @@ import com.epam.esm.exception.CustomException;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.dto.TagDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.shaded.json.JSONArray;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -56,14 +57,14 @@ class TagControllerTest {
                 .claim("scope", "all")
                 .claim("user_id", Long.valueOf(1L))
                 .claim("user_name", "1@gmail.com")
-                .claim("authorities", "ROLE_USER")
+                .claim("authorities", new JSONArray().appendElement("ROLE_USER"))
                 .build();
         adminJwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .claim("scope", "all")
                 .claim("user_id", Long.valueOf(1001L))
                 .claim("user_name", "admin@gmail.com")
-                .claim("authorities", "ROLE_ADMIN")
+                .claim("authorities", new JSONArray().appendElement("ROLE_ADMIN"))
                 .build();
     }
 
@@ -148,6 +149,15 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.errorCode").value(40401));
 
         Mockito.verify(serviceMock, Mockito.times(1)).findById(999L);
+    }
+
+    @Test
+    void findTag_idTypeMismatch_badRequest() throws Exception {
+        mockMvc.perform(get("/tags/abc"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorMessage").value("Can not convert argument to expected type."))
+                .andExpect(jsonPath("$.errorCode").value(40002));
     }
 
     @Test
@@ -387,6 +397,30 @@ class TagControllerTest {
     }
 
     @Test
+    void createTag_notReadableJson_badRequest() throws Exception {
+        mockMvc.perform(post("/tags")
+                        .content("wrongContentFormat")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorMessage").value("Can not read object from JSON."))
+                .andExpect(jsonPath("$.errorCode").value(40003));
+    }
+
+    @Test
+    void createTag_wrongRequestBodyFormat_unsupportedMediaType() throws Exception {
+        mockMvc.perform(post("/tags")
+                        .content("wrongContentFormat")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .with(jwt().jwt(adminJwt).authorities(customConverter)))
+                .andDo(print())
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.errorMessage").value("Media type is unsupported."))
+                .andExpect(jsonPath("$.errorCode").value(41501));
+    }
+
+    @Test
     void findTheMostWidelyTag_guestWithoutJwt_ok() throws Exception {
         TagDto tag = new TagDto(1L, "tag");
         Mockito.when(serviceMock.findTheMostWidelyTag()).thenReturn(tag);
@@ -439,5 +473,15 @@ class TagControllerTest {
                 .andExpect(jsonPath("$._links.create.href", notNullValue()));
 
         Mockito.verify(serviceMock, Mockito.times(1)).findTheMostWidelyTag();
+    }
+
+    @Test
+    void findTheMostWidelyTag_wrongHttpMethod_methodNotSupported() throws Exception {
+        mockMvc.perform(post("/tags/the-most-widely")
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.errorMessage").value("Request method not supported: POST."))
+                .andExpect(jsonPath("$.errorCode").value(40501));
     }
 }
